@@ -3,7 +3,7 @@
    CONFIG
 ========================================== */
 
-const API_URL = "https://script.google.com/macros/s/AKfycbzhuQ5zTk0yDCRqtbyjELHknNNbQGKtb2rm-HgPa3yBfVtGSz2-03VZisR0PHLMNuMU/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwE9WLiyjp8QpejmNC_iRzpSm3sL0xHb4k3jn3FoU0XqsG-19-bQXQqaFkYzp25PFZZ/exec";
 
 /* ==========================================
    GET DATA (AMAN - NO CORS ISSUE)
