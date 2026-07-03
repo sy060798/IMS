@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WO Management Dashboard</title>
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+
+<div class="container">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+
+        <div class="logo">
+            <h2>WO System</h2>
+        </div>
+
+        <ul class="menu">
+
+            <li class="active">
+                <a href="index.html">
+                    <i class="fa-solid fa-house"></i>
+                    Dashboard
+                </a>
+            </li>
+
+            <li>
+                <a href="wo.html">
+                    <i class="fa-solid fa-table"></i>
+                    Data WO
+                </a>
+            </li>
+
+            <li>
+                <a href="aktivasi.html">
+                    <i class="fa-solid fa-bolt"></i>
+                    Aktivasi
+                </a>
+            </li>
+
+            <li>
+                <a href="maintenance.html">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                    Maintenance
+                </a>
+            </li>
+
+            <li>
+                <a href="report.html">
+                    <i class="fa-solid fa-chart-column"></i>
+                    Report
+                </a>
+            </li>
+
+        </ul>
+
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+
+        <!-- Header -->
+        <header class="topbar">
+
+            <h1>Dashboard</h1>
+
+            <div class="user">
+                Admin
+            </div>
+
+        </header>
+
+        <!-- Card Statistik -->
+        <section class="cards">
+
+            <div class="card">
+                <h3>Total WO</h3>
+                <p id="totalWO">0</p>
+            </div>
+
+            <div class="card">
+                <h3>Total Harga WO</h3>
+                <p id="totalHarga">Rp 0</p>
+            </div>
+
+            <div class="card">
+                <h3>Aktivasi</h3>
+                <p id="totalAktivasi">0</p>
+            </div>
+
+            <div class="card">
+                <h3>Maintenance</h3>
+                <p id="totalMaintenance">0</p>
+            </div>
+
+        </section>
+
+        <!-- Grafik -->
+        <section class="chart-box">
+
+            <div class="chart">
+                <h3>WO Per Bulan</h3>
+                <canvas id="bulanChart"></canvas>
+            </div>
+
+            <div class="chart">
+                <h3>WO Per Kota</h3>
+                <canvas id="kotaChart"></canvas>
+            </div>
+
+        </section>
+
+        <!-- Tabel Data Terbaru -->
+        <section class="table-box">
+
+            <h2>Data WO Terbaru</h2>
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>WO Number</th>
+                        <th>Job Name</th>
+                        <th>City</th>
+                        <th>Status</th>
+                        <th>WO Total</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="recentTable">
+
+                </tbody>
+
+            </table>
+
+        </section>
+
+    </main>
+
+</div>
+
+<!-- Chart JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Dashboard -->
+<script src="js/api.js"></script>
+<script src="js/dashboard.js"></script>
+
+</body>
+</html>
