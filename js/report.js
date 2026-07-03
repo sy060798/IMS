@@ -74,6 +74,22 @@ function render(data) {
     document.getElementById("rTotalKota").innerText = kotaSet.size;
 }
 
+
+   /* =========================
+   FORMAT FUNCTION (INI TEMPATNYA)
+========================= */
+
+function formatYearMonth(dateStr) {
+
+    if (!dateStr) return "-";
+
+    const date = new Date(dateStr);
+
+    if (isNaN(date)) return "-";
+
+    return date.toISOString().slice(0, 7);
+}
+
 /* =========================
    FORMAT RUPIAH
 ========================= */
