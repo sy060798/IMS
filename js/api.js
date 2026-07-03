@@ -50,10 +50,26 @@ function addWO(data) {
     return callAPI({ action: "add", data });
 }
 
-function updateWO(data) {
-    return callAPI({ action: "update", data });
+async function updateWO(data) {
+
+    const result = await callAPI({
+        action: "update",
+        data
+    });
+
+    console.log("UPDATE RESULT:", result);
+
+    return result;
 }
 
-function deleteWO(woNumber) {
-    return callAPI({ action: "delete", woNumber });
+async function deleteWO(woNumber) {
+
+    const result = await callAPI({
+        action: "delete",
+        woNumber
+    });
+
+    console.log("DELETE RESULT:", result);
+
+    return result;
 }
