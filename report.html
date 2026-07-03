@@ -27,25 +27,11 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 
         <ul class="menu">
 
-            <li>
-                <a href="index.html"><i class="fa fa-house"></i> Dashboard</a>
-            </li>
-
-            <li>
-                <a href="wo.html"><i class="fa fa-table"></i> Data WO</a>
-            </li>
-
-            <li>
-                <a href="aktivasi.html"><i class="fa fa-bolt"></i> Aktivasi</a>
-            </li>
-
-            <li>
-                <a href="maintenance.html"><i class="fa fa-wrench"></i> Maintenance</a>
-            </li>
-
-            <li class="active">
-                <a href="report.html"><i class="fa fa-chart-line"></i> Report</a>
-            </li>
+            <li><a href="index.html"><i class="fa fa-house"></i> Dashboard</a></li>
+            <li><a href="wo.html"><i class="fa fa-table"></i> Data WO</a></li>
+            <li><a href="aktivasi.html"><i class="fa fa-bolt"></i> Aktivasi</a></li>
+            <li><a href="maintenance.html"><i class="fa fa-wrench"></i> Maintenance</a></li>
+            <li class="active"><a href="report.html"><i class="fa fa-chart-line"></i> Report</a></li>
 
         </ul>
 
@@ -58,10 +44,10 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
             <h1>Report WO</h1>
         </div>
 
-        <!-- FILTER -->
         <div class="table-box">
 
-            <div style="display:flex;gap:10px;margin-bottom:15px;flex-wrap:wrap;">
+            <!-- FILTER -->
+            <div class="filter-bar">
 
                 <select id="filterBulan">
                     <option value="">Semua Bulan</option>
@@ -69,8 +55,8 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 
                 <select id="filterJenis">
                     <option value="">Semua Jenis</option>
-                    <option>Aktivasi</option>
-                    <option>Maintenance</option>
+                    <option value="Aktivasi">Aktivasi</option>
+                    <option value="Maintenance">Maintenance</option>
                 </select>
 
                 <button onclick="loadReport()">Filter</button>
@@ -78,7 +64,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
             </div>
 
             <!-- SUMMARY -->
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px;margin-bottom:20px;">
+            <div class="summary">
 
                 <div class="card">
                     <h3>Total WO</h3>
