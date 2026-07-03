@@ -123,13 +123,17 @@ async function loadTable() {
 function renderTable(data) {
 
     const tbody = document.getElementById("tableBody");
-    if (!tbody) return;
+
+    console.log("TBody:", tbody);
+    console.log("DATA:", data);
+
+    if (!tbody) {
+        console.error("tableBody NOT FOUND");
+        return;
+    }
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" style="text-align:center;">No Data</td>
-            </tr>`;
+        tbody.innerHTML = `<tr><td colspan="6">No Data</td></tr>`;
         return;
     }
 
@@ -139,16 +143,18 @@ function renderTable(data) {
 
         html += `
         <tr>
-            <td>${item.woNumber || "-"}</td>
-            <td>${item.jobName || "-"}</td>
-            <td>${item.city || "-"}</td>
-            <td>${item.status || "-"}</td>
-            <td>${item.woTotal || "-"}</td>
+            <td>${item.woNumber ?? "-"}</td>
+            <td>${item.reference ?? "-"}</td>
+            <td>${item.jobName ?? "-"}</td>
+            <td>${item.city ?? "-"}</td>
+            <td>${item.status ?? "-"}</td>
+            <td>${item.woTotal ?? "-"}</td>
             <td>
                 <button onclick="editWO('${item.woNumber}')">Edit</button>
                 <button onclick="deleteWO('${item.woNumber}')">Hapus</button>
             </td>
-        </tr>`;
+        </tr>
+        `;
     });
 
     tbody.innerHTML = html;
