@@ -22,7 +22,7 @@ async function loadReport() {
 ========================= */
 function applyFilter() {
 
-    let bulan = document.getElementById("filterBulan").value;
+    let status = document.getElementById("filterStatus").value;
     let jenis = document.getElementById("filterJenis").value;
 
     let data = allData;
@@ -32,23 +32,10 @@ function applyFilter() {
         data = data.filter(x => x.jenis === jenis);
     }
 
-    // filter bulan
-    if (bulan) {
-        data = data.filter(x => {
-
-            if (!x.woStart) return false;
-
-            let date = new Date(x.woStart);
-
-            if (isNaN(date)) return false;
-
-            let b = date.getMonth() + 1;
-
-            return String(b) === String(bulan);
-        });
-    }
-
-    render(data);
+    
+   // filter status
+if (status) {
+    data = data.filter(x => x.status === status);
 }
 
 /* =========================
