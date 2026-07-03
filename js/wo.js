@@ -2,13 +2,15 @@ let editMode = false;
 let woData = [];
 
 /* =========================
-   OPEN / CLOSE FORM
+   OPEN FORM
 ========================= */
-
 function openForm() {
     document.getElementById("modalWO").style.display = "block";
 }
 
+/* =========================
+   CLOSE FORM
+========================= */
 function closeForm() {
     document.getElementById("modalWO").style.display = "none";
     clearForm();
@@ -18,7 +20,6 @@ function closeForm() {
 /* =========================
    CLEAR FORM
 ========================= */
-
 function clearForm() {
 
     const fields = [
@@ -34,9 +35,8 @@ function clearForm() {
 }
 
 /* =========================
-   SAVE
+   SAVE (ADD / UPDATE)
 ========================= */
-
 async function saveWO() {
 
     const data = {
@@ -56,6 +56,8 @@ async function saveWO() {
         jenis: document.getElementById("jenis").value
     };
 
+    console.log("SAVE DATA:", data);
+
     if (editMode) {
         await updateWO(data);
     } else {
@@ -67,9 +69,8 @@ async function saveWO() {
 }
 
 /* =========================
-   EDIT
+   EDIT DATA
 ========================= */
-
 function editWO(woNumber) {
 
     const item = woData.find(x => x.woNumber == woNumber);
@@ -78,33 +79,45 @@ function editWO(woNumber) {
     editMode = true;
     openForm();
 
-    Object.keys(item).forEach(key => {
-        const el = document.getElementById(key);
-        if (el) el.value = item[key];
-    });
+    // isi form otomatis dari data
+    setValue("woNumber", item.woNumber);
+    setValue("reference", item.reference);
+    setValue("quotation", item.quotation);
+    setValue("woStart", item.woStart);
+    setValue("woEnd", item.woEnd);
+    setValue("jobName", item.jobName);
+    setValue("area", item.area);
+    setValue("city", item.city);
+    setValue("boq", item.boq);
+    setValue("woTotal", item.woTotal);
+    setValue("status", item.status);
+    setValue("praInvoice", item.praInvoice);
+    setValue("invoice", item.invoice);
+    setValue("jenis", item.jenis);
+}
+
+function setValue(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.value = value ?? "";
 }
 
 /* =========================
-   LOAD TABLE (FIX UTAMA)
+   LOAD DATA
 ========================= */
-
 async function loadTable() {
 
     try {
 
         const res = await getWO();
 
-        console.log("RAW API RESPONSE:", res);
+        console.log("RAW RESPONSE:", res);
 
-        // 🔥 NORMALISASI DATA (INI FIX UTAMA)
         let data = [];
 
         if (Array.isArray(res)) {
             data = res;
         } else if (res && Array.isArray(res.data)) {
             data = res.data;
-        } else {
-            data = [];
         }
 
         woData = data;
@@ -119,21 +132,17 @@ async function loadTable() {
 /* =========================
    RENDER TABLE
 ========================= */
-
 function renderTable(data) {
 
     const tbody = document.getElementById("tableBody");
 
-    console.log("TBody:", tbody);
-    console.log("DATA:", data);
-
     if (!tbody) {
-        console.error("tableBody NOT FOUND");
+        console.error("tableBody not found");
         return;
     }
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6">No Data</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7">No Data</td></tr>`;
         return;
     }
 
@@ -151,7 +160,7 @@ function renderTable(data) {
             <td>${item.woTotal ?? "-"}</td>
             <td>
                 <button onclick="editWO('${item.woNumber}')">Edit</button>
-                <button onclick="deleteWO('${item.woNumber}')">Hapus</button>
+                <button onclick="hapusWO('${item.woNumber}')">Hapus</button>
             </td>
         </tr>
         `;
@@ -161,20 +170,20 @@ function renderTable(data) {
 }
 
 /* =========================
-   DELETE ACTION (TAMBAHAN FIX)
+   DELETE FIX
 ========================= */
-
 async function hapusWO(woNumber) {
 
-    if (!confirm("Yakin ingin menghapus data?")) return;
+    if (!confirm("Yakin hapus data ini?")) return;
 
-    await deleteWO(woNumber); // fungsi dari api.js
+    console.log("DELETE:", woNumber);
 
-    loadTable();
+    await deleteWO(woNumber);
+
+    await loadTable();
 }
 
 /* =========================
    INIT
 ========================= */
-
 loadTable();
