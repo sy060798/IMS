@@ -1,24 +1,25 @@
-/* =========================
-   REPORT DATA
-========================= */
-
 let allData = [];
 
 /* =========================
    INIT
 ========================= */
-
 async function loadReport() {
 
-    allData = await getWO();
+    try {
+        const res = await getWO();
 
-    applyFilter();
+        allData = Array.isArray(res) ? res : (res?.data || []);
+
+        applyFilter();
+
+    } catch (err) {
+        console.error("LOAD REPORT ERROR:", err);
+    }
 }
 
 /* =========================
    FILTER
 ========================= */
-
 function applyFilter() {
 
     let bulan = document.getElementById("filterBulan").value;
@@ -26,14 +27,24 @@ function applyFilter() {
 
     let data = allData;
 
+    // filter jenis
     if (jenis) {
         data = data.filter(x => x.jenis === jenis);
     }
 
+    // filter bulan
     if (bulan) {
         data = data.filter(x => {
-            let b = new Date(x.woStart).getMonth() + 1;
-            return b == bulan;
+
+            if (!x.woStart) return false;
+
+            let date = new Date(x.woStart);
+
+            if (isNaN(date)) return false;
+
+            let b = date.getMonth() + 1;
+
+            return String(b) === String(bulan);
         });
     }
 
@@ -41,37 +52,32 @@ function applyFilter() {
 }
 
 /* =========================
-   RENDER TABLE + SUMMARY
+   RENDER
 ========================= */
-
 function render(data) {
 
     let html = "";
-
     let totalWO = data.length;
-
     let totalHarga = 0;
-
     let kotaSet = new Set();
 
     data.forEach(item => {
 
         totalHarga += Number(item.woTotal || 0);
-        kotaSet.add(item.city);
+        if (item.city) kotaSet.add(item.city);
 
         html += `
         <tr>
-            <td>${item.woNumber}</td>
-            <td>${item.jobName}</td>
-            <td>${item.city}</td>
-            <td>${item.Wo End}</td>
-            <td>${item.jenis}</td>
-            <td>${item.status}</td>
+            <td>${item.woNumber ?? "-"}</td>
+            <td>${item.jobName ?? "-"}</td>
+            <td>${item.city ?? "-"}</td>
+            <td>${item.woEnd ?? "-"}</td>
+            <td>${item.jenis ?? "-"}</td>
+            <td>${item.status ?? "-"}</td>
             <td>${formatRupiah(item.woTotal)}</td>
-            <td>${item.Pra Invoice Number}</td>
+            <td>${item.praInvoice ?? "-"}</td>
         </tr>
         `;
-
     });
 
     document.getElementById("reportTable").innerHTML = html;
@@ -84,15 +90,12 @@ function render(data) {
 /* =========================
    FORMAT RUPIAH
 ========================= */
-
 function formatRupiah(angka) {
 
-    return "Rp " + Number(angka || 0)
-        .toLocaleString("id-ID");
+    return "Rp " + Number(angka || 0).toLocaleString("id-ID");
 }
 
 /* =========================
-   INIT LOAD
+   INIT
 ========================= */
-
 loadReport();
