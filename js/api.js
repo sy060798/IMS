@@ -1,37 +1,59 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbwE9WLiyjp8QpejmNC_iRzpSm3sL0xHb4k3jn3FoU0XqsG-19-bQXQqaFkYzp25PFZZ/exec";
 
-/* GET */
+/* =========================
+   GET DATA ONLY (SAFE)
+========================= */
 async function getWO() {
-    const res = await fetch(API_URL + "?action=get");
-    const data = await res.json();
-    return Array.isArray(data) ? data : (data.data || []);
-}
+    try {
+        const res = await fetch(API_URL + "?action=get");
+        const data = await res.json();
 
-/* POST WRAPPER */
-async function postData(payload) {
+        // pastikan selalu array
+        if (Array.isArray(data)) return data;
+        if (data && Array.isArray(data.data)) return data.data;
 
-    let url = API_URL + "?action=" + payload.action;
-
-    if (payload.data) {
-        url += "&data=" + encodeURIComponent(JSON.stringify(payload.data));
+        return [];
+    } catch (err) {
+        console.error("GET WO ERROR:", err);
+        return [];
     }
+}
 
-    if (payload.woNumber) {
-        url += "&woNumber=" + encodeURIComponent(payload.woNumber);
+/* =========================
+   ADD / UPDATE / DELETE VIA GET
+========================= */
+
+async function callAPI(params) {
+    try {
+
+        let url = API_URL + "?action=" + params.action;
+
+        if (params.data) {
+            url += "&data=" + encodeURIComponent(JSON.stringify(params.data));
+        }
+
+        if (params.woNumber) {
+            url += "&woNumber=" + encodeURIComponent(params.woNumber);
+        }
+
+        const res = await fetch(url);
+        return await res.json();
+
+    } catch (err) {
+        console.error("API ERROR:", err);
+        return { status: false };
     }
-
-    const res = await fetch(url);
-    return await res.json();
 }
 
-async function addWO(data) {
-    return await postData({ action: "add", data });
+/* WRAPPER */
+function addWO(data) {
+    return callAPI({ action: "add", data });
 }
 
-async function updateWO(data) {
-    return await postData({ action: "update", data });
+function updateWO(data) {
+    return callAPI({ action: "update", data });
 }
 
-async function deleteWO(woNumber) {
-    return await postData({ action: "delete", woNumber });
+function deleteWO(woNumber) {
+    return callAPI({ action: "delete", woNumber });
 }
