@@ -1,17 +1,13 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Data WO</title>
 
 <link rel="stylesheet" href="css/style.css">
-
 <link rel="stylesheet"
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
 </head>
 
 <body>
@@ -26,42 +22,11 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
         </div>
 
         <ul class="menu">
-
-            <li>
-                <a href="index.html">
-                    <i class="fa-solid fa-house"></i>
-                    Dashboard
-                </a>
-            </li>
-
-            <li class="active">
-                <a href="wo.html">
-                    <i class="fa-solid fa-table"></i>
-                    Data WO
-                </a>
-            </li>
-
-            <li>
-                <a href="aktivasi.html">
-                    <i class="fa-solid fa-bolt"></i>
-                    Aktivasi
-                </a>
-            </li>
-
-            <li>
-                <a href="maintenance.html">
-                    <i class="fa-solid fa-screwdriver-wrench"></i>
-                    Maintenance
-                </a>
-            </li>
-
-            <li>
-                <a href="report.html">
-                    <i class="fa-solid fa-chart-column"></i>
-                    Report
-                </a>
-            </li>
-
+            <li><a href="index.html"><i class="fa-solid fa-house"></i> Dashboard</a></li>
+            <li class="active"><a href="wo.html"><i class="fa-solid fa-table"></i> Data WO</a></li>
+            <li><a href="aktivasi.html"><i class="fa-solid fa-bolt"></i> Aktivasi</a></li>
+            <li><a href="maintenance.html"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a></li>
+            <li><a href="report.html"><i class="fa-solid fa-chart-column"></i> Report</a></li>
         </ul>
 
     </aside>
@@ -70,148 +35,101 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     <main class="main">
 
         <div class="topbar">
-
             <h1>Data Work Order</h1>
 
             <button onclick="openForm()">
                 <i class="fa fa-plus"></i>
                 Tambah WO
             </button>
-
         </div>
 
-        <!-- Filter -->
-
+        <!-- FILTER -->
         <div class="table-box">
 
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
 
                 <input
                     type="text"
-                    id="search"
+                    id="searchWO"
                     placeholder="Cari WO..."
-                    onkeyup="searchWO()">
+                    oninput="applyFilter()">
 
-                <select id="filterStatus">
+                <select id="filterStatus" onchange="applyFilter()">
                     <option value="">Semua Status</option>
-                    <option>Open</option>
-                    <option>Close</option>
-                    <option>Pending</option>
+                    <option value="Open">Open</option>
+                    <option value="Close">Close</option>
+                    <option value="Pending">Pending</option>
                 </select>
 
-                <select id="filterCity">
+                <select id="filterCity" onchange="applyFilter()">
                     <option value="">Semua Kota</option>
                 </select>
 
             </div>
 
             <table>
-    <thead>
-        <tr>
-            <th>WO Number</th>
-            <th>Reference</th>
-            <th>Job Name</th>
-            <th>City</th>
-            <th>Status</th>
-            <th>WO Total</th>
-            <th>Aksi</th>
-        </tr>
-    </thead>
+                <thead>
+                    <tr>
+                        <th>WO Number</th>
+                        <th>Reference</th>
+                        <th>Job Name</th>
+                        <th>City</th>
+                        <th>Status</th>
+                        <th>WO Total</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
 
-    <tbody id="tableBody"></tbody>
-</table>
+                <tbody id="tableBody"></tbody>
+            </table>
 
         </div>
 
     </main>
-
 </div>
 
-<!-- Modal -->
+<!-- MODAL -->
+<div id="modalWO" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);">
 
-<div id="modalWO"
-style="display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,.5);">
-
-<div style="
-background:white;
-width:700px;
-max-width:95%;
-margin:30px auto;
-padding:20px;
-border-radius:10px;">
+<div style="background:white;width:700px;max-width:95%;margin:30px auto;padding:20px;border-radius:10px;">
 
 <h2>Data WO</h2>
 
 <input id="woNumber" placeholder="WO Number">
-
 <input id="reference" placeholder="Reference Code">
-
 <input id="quotation" placeholder="Quotation ID">
-
 <input type="date" id="woStart">
-
 <input type="date" id="woEnd">
-
 <input id="jobName" placeholder="Job Name">
-
 <input id="area" placeholder="Area">
-
 <input id="city" placeholder="City">
-
 <input id="boq" placeholder="BOQ Total">
-
 <input id="woTotal" placeholder="WO Total">
 
 <select id="status">
-
-<option>Open</option>
-<option>Close</option>
-<option>Pending</option>
-
+    <option>Open</option>
+    <option>Close</option>
+    <option>Pending</option>
 </select>
 
 <input id="praInvoice" placeholder="Pra Invoice">
-
 <input id="invoice" placeholder="Invoice Number">
 
 <select id="jenis">
-
-<option>Aktivasi</option>
-
-<option>Maintenance</option>
-
+    <option>Aktivasi</option>
+    <option>Maintenance</option>
 </select>
 
 <div style="display:flex;gap:10px;">
-
-<button onclick="saveWO()">
-
-Simpan
-
-</button>
-
-<button onclick="closeForm()">
-
-Batal
-
-</button>
-
+<button onclick="saveWO()">Simpan</button>
+<button onclick="closeForm()">Batal</button>
 </div>
 
 </div>
-
 </div>
 
 <script src="js/api.js"></script>
-
 <script src="js/wo.js"></script>
 
 </body>
 </html>
-```
