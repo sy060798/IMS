@@ -164,12 +164,13 @@ function renderTable(data) {
    DELETE ACTION (TAMBAHAN FIX)
 ========================= */
 
-async function deleteWO(woNumber) {
+async function hapusWO(woNumber) {
 
-    if (!confirm("Yakin hapus WO ini?")) return;
+    if (!confirm("Yakin ingin menghapus data?")) return;
 
-    await window.deleteWO(woNumber); // dari api.js
-    await loadTable();
+    await deleteWO(woNumber); // fungsi dari api.js
+
+    loadTable();
 }
 
 /* =========================
