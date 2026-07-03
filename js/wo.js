@@ -130,6 +130,39 @@ async function loadTable() {
 }
 
 /* =========================
+   filter
+========================= */
+
+function applyFilter() {
+    const search = document.getElementById("searchWO")?.value.toLowerCase() || "";
+    const status = document.getElementById("filterStatus")?.value || "";
+    const city = document.getElementById("filterCity")?.value || "";
+
+    let filtered = woData;
+
+    // filter WO number / reference / jobName
+    if (search) {
+        filtered = filtered.filter(item =>
+            (item.woNumber || "").toLowerCase().includes(search) ||
+            (item.reference || "").toLowerCase().includes(search) ||
+            (item.jobName || "").toLowerCase().includes(search)
+        );
+    }
+
+    // filter status
+    if (status && status !== "All") {
+        filtered = filtered.filter(item => item.status === status);
+    }
+
+    // filter city
+    if (city && city !== "Semua Kota") {
+        filtered = filtered.filter(item => item.city === city);
+    }
+
+    renderTable(filtered);
+}
+
+/* =========================
    RENDER TABLE
 ========================= */
 function renderTable(data) {
