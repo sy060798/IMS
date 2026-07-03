@@ -1,35 +1,25 @@
-
 let editMode = false;
 let woData = [];
 
-/* ==========================================
-   OPEN FORM
-========================================== */
-
+/* OPEN */
 function openForm() {
     document.getElementById("modalWO").style.display = "block";
 }
 
-/* ==========================================
-   CLOSE FORM
-========================================== */
-
+/* CLOSE */
 function closeForm() {
     document.getElementById("modalWO").style.display = "none";
     clearForm();
     editMode = false;
 }
 
-/* ==========================================
-   CLEAR FORM (FIX ERROR KAMU)
-========================================== */
-
+/* CLEAR FORM */
 function clearForm() {
 
     const fields = [
-        "woNumber", "reference", "quotation", "woStart", "woEnd",
-        "jobName", "area", "city", "boq", "woTotal",
-        "status", "praInvoice", "invoice", "jenis"
+        "woNumber","reference","quotation","woStart","woEnd",
+        "jobName","area","city","boq","woTotal",
+        "status","praInvoice","invoice","jenis"
     ];
 
     fields.forEach(id => {
@@ -38,10 +28,7 @@ function clearForm() {
     });
 }
 
-/* ==========================================
-   SAVE DATA (ADD / UPDATE)
-========================================== */
-
+/* SAVE */
 async function saveWO() {
 
     const data = {
@@ -61,26 +48,17 @@ async function saveWO() {
         jenis: document.getElementById("jenis").value
     };
 
-    try {
-
-        if (editMode) {
-            await updateWO(data);
-        } else {
-            await addWO(data);
-        }
-
-        closeForm();
-        loadTable();
-
-    } catch (err) {
-        console.error("SAVE ERROR:", err);
+    if (editMode) {
+        await updateWO(data);
+    } else {
+        await addWO(data);
     }
+
+    closeForm();
+    loadTable();
 }
 
-/* ==========================================
-   EDIT DATA
-========================================== */
-
+/* EDIT */
 function editWO(woNumber) {
 
     const item = woData.find(x => x.woNumber === woNumber);
@@ -89,44 +67,32 @@ function editWO(woNumber) {
     editMode = true;
     openForm();
 
-    document.getElementById("woNumber").value = item.woNumber;
-    document.getElementById("reference").value = item.reference;
-    document.getElementById("quotation").value = item.quotation;
-    document.getElementById("woStart").value = item.woStart;
-    document.getElementById("woEnd").value = item.woEnd;
-    document.getElementById("jobName").value = item.jobName;
-    document.getElementById("area").value = item.area;
-    document.getElementById("city").value = item.city;
-    document.getElementById("boq").value = item.boq;
-    document.getElementById("woTotal").value = item.woTotal;
-    document.getElementById("status").value = item.status;
-    document.getElementById("praInvoice").value = item.praInvoice;
-    document.getElementById("invoice").value = item.invoice;
-    document.getElementById("jenis").value = item.jenis;
+    Object.keys(item).forEach(key => {
+        const el = document.getElementById(key);
+        if (el) el.value = item[key];
+    });
 }
 
-/* ==========================================
-   LOAD TABLE (SAFE VERSION)
-========================================== */
-
+/* LOAD */
 async function loadTable() {
 
-    try {
+    const res = await getWO();
 
-        woData = await getWO();
+    woData = res;
 
-        renderTable(woData);
-
-    } catch (err) {
-        console.error("LOAD ERROR:", err);
-    }
+    renderTable(res);
 }
 
-/* ==========================================
-   RENDER TABLE (CONTOH BASIC)
-========================================== */
-
+/* RENDER */
 function renderTable(data) {
+
+    const tbody = document.getElementById("tableBody");
+    if (!tbody) return;
+
+    if (!data.length) {
+        tbody.innerHTML = `<tr><td colspan="6">No Data</td></tr>`;
+        return;
+    }
 
     let html = "";
 
@@ -134,24 +100,19 @@ function renderTable(data) {
 
         html += `
         <tr>
-            <td>${item.woNumber}</td>
-            <td>${item.jobName}</td>
-            <td>${item.city}</td>
-            <td>${item.status}</td>
-            <td>${item.woTotal}</td>
+            <td>${item.woNumber || ""}</td>
+            <td>${item.jobName || ""}</td>
+            <td>${item.city || ""}</td>
+            <td>${item.status || ""}</td>
+            <td>${item.woTotal || ""}</td>
             <td>
                 <button onclick="editWO('${item.woNumber}')">Edit</button>
             </td>
-        </tr>
-        `;
+        </tr>`;
     });
 
-    const tbody = document.getElementById("tableBody");
-    if (tbody) tbody.innerHTML = html;
+    tbody.innerHTML = html;
 }
 
-/* ==========================================
-   INIT
-========================================== */
-
+/* INIT */
 loadTable();
