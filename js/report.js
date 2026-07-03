@@ -64,9 +64,11 @@ function render(data) {
             <td>${item.woNumber}</td>
             <td>${item.jobName}</td>
             <td>${item.city}</td>
+            <td>${item.Wo End}</td>
             <td>${item.jenis}</td>
             <td>${item.status}</td>
             <td>${formatRupiah(item.woTotal)}</td>
+            <td>${item.Pra Invoice Number}</td>
         </tr>
         `;
 
