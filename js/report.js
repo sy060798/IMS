@@ -32,11 +32,14 @@ function applyFilter() {
         data = data.filter(x => x.jenis === jenis);
     }
 
-    
-   // filter status
-if (status) {
-    data = data.filter(x => x.status === status);
+    // filter status
+    if (status) {
+        data = data.filter(x => x.status === status);
+    }
+
+    render(data);
 }
+
 
 /* =========================
    RENDER
