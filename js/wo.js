@@ -1,4 +1,3 @@
-
 let editMode = false;
 let woData = [];
 
@@ -35,7 +34,7 @@ function clearForm() {
 }
 
 /* =========================
-   SAVE (ADD / UPDATE)
+   SAVE
 ========================= */
 
 async function saveWO() {
@@ -64,7 +63,7 @@ async function saveWO() {
     }
 
     closeForm();
-    loadTable();
+    await loadTable();
 }
 
 /* =========================
@@ -73,39 +72,48 @@ async function saveWO() {
 
 function editWO(woNumber) {
 
-    const item = woData.find(x => x.woNumber === woNumber);
+    const item = woData.find(x => x.woNumber == woNumber);
     if (!item) return;
 
     editMode = true;
     openForm();
 
-    document.getElementById("woNumber").value = item.woNumber || "";
-    document.getElementById("reference").value = item.reference || "";
-    document.getElementById("quotation").value = item.quotation || "";
-    document.getElementById("woStart").value = item.woStart || "";
-    document.getElementById("woEnd").value = item.woEnd || "";
-    document.getElementById("jobName").value = item.jobName || "";
-    document.getElementById("area").value = item.area || "";
-    document.getElementById("city").value = item.city || "";
-    document.getElementById("boq").value = item.boq || "";
-    document.getElementById("woTotal").value = item.woTotal || "";
-    document.getElementById("status").value = item.status || "";
-    document.getElementById("praInvoice").value = item.praInvoice || "";
-    document.getElementById("invoice").value = item.invoice || "";
-    document.getElementById("jenis").value = item.jenis || "";
+    Object.keys(item).forEach(key => {
+        const el = document.getElementById(key);
+        if (el) el.value = item[key];
+    });
 }
 
 /* =========================
-   LOAD TABLE (IMPORTANT FIX)
+   LOAD TABLE (FIX UTAMA)
 ========================= */
 
 async function loadTable() {
 
-    const data = await getWO();
+    try {
 
-    woData = data || [];
+        const res = await getWO();
 
-    renderTable(woData);
+        console.log("RAW API RESPONSE:", res);
+
+        // 🔥 NORMALISASI DATA (INI FIX UTAMA)
+        let data = [];
+
+        if (Array.isArray(res)) {
+            data = res;
+        } else if (res && Array.isArray(res.data)) {
+            data = res.data;
+        } else {
+            data = [];
+        }
+
+        woData = data;
+
+        renderTable(data);
+
+    } catch (err) {
+        console.error("LOAD ERROR:", err);
+    }
 }
 
 /* =========================
@@ -121,8 +129,7 @@ function renderTable(data) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="6" style="text-align:center;">No Data</td>
-            </tr>
-        `;
+            </tr>`;
         return;
     }
 
@@ -132,18 +139,31 @@ function renderTable(data) {
 
         html += `
         <tr>
-            <td>${item.woNumber || ""}</td>
-            <td>${item.jobName || ""}</td>
-            <td>${item.city || ""}</td>
-            <td>${item.status || ""}</td>
-            <td>${item.woTotal || ""}</td>
+            <td>${item.woNumber || "-"}</td>
+            <td>${item.jobName || "-"}</td>
+            <td>${item.city || "-"}</td>
+            <td>${item.status || "-"}</td>
+            <td>${item.woTotal || "-"}</td>
             <td>
                 <button onclick="editWO('${item.woNumber}')">Edit</button>
+                <button onclick="deleteWO('${item.woNumber}')">Hapus</button>
             </td>
         </tr>`;
     });
 
     tbody.innerHTML = html;
+}
+
+/* =========================
+   DELETE ACTION (TAMBAHAN FIX)
+========================= */
+
+async function deleteWO(woNumber) {
+
+    if (!confirm("Yakin hapus WO ini?")) return;
+
+    await window.deleteWO(woNumber); // dari api.js
+    await loadTable();
 }
 
 /* =========================
