@@ -1,58 +1,28 @@
-
-/* ==========================================
-   CONFIG
-========================================== */
-
 const API_URL = "https://script.google.com/macros/s/AKfycbwE9WLiyjp8QpejmNC_iRzpSm3sL0xHb4k3jn3FoU0XqsG-19-bQXQqaFkYzp25PFZZ/exec";
 
-/* ==========================================
-   GET DATA (AMAN - NO CORS ISSUE)
-========================================== */
-
+/* GET */
 async function getWO() {
-    try {
-        const res = await fetch(API_URL + "?action=get");
-        return await res.json();
-    } catch (err) {
-        console.error("GET ERROR:", err);
-        return [];
-    }
+    const res = await fetch(API_URL + "?action=get");
+    const data = await res.json();
+    return Array.isArray(data) ? data : (data.data || []);
 }
 
-/* ==========================================
-   POST VIA GET PARAMETER (ANTI CORS FIX)
-========================================== */
-
+/* POST WRAPPER */
 async function postData(payload) {
 
-    try {
+    let url = API_URL + "?action=" + payload.action;
 
-        const url =
-            API_URL +
-            "?action=" + payload.action +
-            "&data=" + encodeURIComponent(JSON.stringify(payload.data || {})) +
-            "&woNumber=" + encodeURIComponent(payload.woNumber || "");
-
-        const res = await fetch(url, {
-            method: "GET" // penting: hindari preflight CORS
-        });
-
-        return await res.json();
-
-    } catch (err) {
-
-        console.error("POST ERROR:", err);
-
-        return {
-            status: false,
-            message: "Network error"
-        };
+    if (payload.data) {
+        url += "&data=" + encodeURIComponent(JSON.stringify(payload.data));
     }
-}
 
-/* ==========================================
-   WRAPPER FUNCTIONS
-========================================== */
+    if (payload.woNumber) {
+        url += "&woNumber=" + encodeURIComponent(payload.woNumber);
+    }
+
+    const res = await fetch(url);
+    return await res.json();
+}
 
 async function addWO(data) {
     return await postData({ action: "add", data });
@@ -65,15 +35,3 @@ async function updateWO(data) {
 async function deleteWO(woNumber) {
     return await postData({ action: "delete", woNumber });
 }
-
-/* ==========================================
-   AUTO REFRESH TABLE
-========================================== */
-
-setInterval(() => {
-
-    if (typeof loadTable === "function") {
-        loadTable();
-    }
-
-}, 10000);
