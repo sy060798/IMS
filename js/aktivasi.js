@@ -1,18 +1,26 @@
+let dataAktivasi = [];
+
 /* =========================
    LOAD AKTIVASI DATA
 ========================= */
 
-let dataAktivasi = [];
-
 async function loadAktivasi() {
 
-    const res = await getWO();
+    try {
 
-    const all = Array.isArray(res) ? res : (res?.data || []);
+        const res = await getWO();
 
-    dataAktivasi = all.filter(item => item.jenis === "Aktivasi");
+        const all = Array.isArray(res) ? res : (res?.data || []);
 
-    renderTable();
+        dataAktivasi = all.filter(item => item?.jenis === "Aktivasi");
+
+        renderTable();
+
+    } catch (err) {
+
+        console.error("LOAD AKTIVASI ERROR:", err);
+        dataAktivasi = [];
+    }
 }
 
 /* =========================
@@ -21,26 +29,29 @@ async function loadAktivasi() {
 
 function renderTable() {
 
-    let html = "";
+    const tbody = document.getElementById("aktivasiTable");
 
-    dataAktivasi.forEach(item => {
+    if (!tbody) return;
 
-        html += `
+    if (dataAktivasi.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8">No Data</td></tr>`;
+        return;
+    }
+
+    const html = dataAktivasi.map(item => `
         <tr>
-            <td>${item.praInvoiceNumber ?? "-"}</td>
-            <td>${item.invoiceNumber ?? "-"}</td>
-            <td>${item.invoiceName ?? "-"}</td>
-            <td>${item.invoiceDate ?? "-"}</td>
-            <td>${item.periode ?? "-"}</td>
-            <td>${item.city ?? "-"}</td>
-            <td>${item.status ?? "-"}</td>
-            <td>${formatRupiah(item.woTotal)}</td>
+            <td>${item?.praInvoiceNumber ?? "-"}</td>
+            <td>${item?.invoiceNumber ?? "-"}</td>
+            <td>${item?.invoiceName ?? "-"}</td>
+            <td>${item?.invoiceDate ?? "-"}</td>
+            <td>${item?.periode ?? "-"}</td>
+            <td>${item?.city ?? "-"}</td>
+            <td>${item?.status ?? "-"}</td>
+            <td>${formatRupiah(item?.woTotal)}</td>
         </tr>
-        `;
+    `).join("");
 
-    });
-
-    document.getElementById("aktivasiTable").innerHTML = html;
+    tbody.innerHTML = html;
 }
 
 /* =========================
@@ -48,7 +59,6 @@ function renderTable() {
 ========================= */
 
 function formatRupiah(angka) {
-
     return "Rp " + Number(angka || 0).toLocaleString("id-ID");
 }
 
