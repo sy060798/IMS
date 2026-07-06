@@ -5,7 +5,8 @@ const API_URL = "https://script.google.com/macros/s/AKfycby3rTXADnj2dkicPOZcWojW
 ========================= */
 async function getWO() {
     try {
-        const res = await fetch(API_URL + "?action=get", {
+        const res = await fetch(`${API_URL}?action=get`, {
+            method: "GET",
             cache: "no-cache"
         });
 
@@ -22,19 +23,21 @@ async function getWO() {
 }
 
 /* =========================
-   BASE CALL (FIXED → GET ONLY)
+   BASE CALL (GET VERSION)
 ========================= */
 async function callAPI(params) {
     try {
 
-        let url = API_URL + "?action=" + params.action;
+        let url = `${API_URL}?action=${params.action}`;
 
+        // kirim data object
         if (params.data) {
-            url += "&data=" + encodeURIComponent(JSON.stringify(params.data));
+            url += `&data=${encodeURIComponent(JSON.stringify(params.data))}`;
         }
 
+        // kirim key utama
         if (params.praInvoiceNumber) {
-            url += "&praInvoiceNumber=" + encodeURIComponent(params.praInvoiceNumber);
+            url += `&praInvoiceNumber=${encodeURIComponent(params.praInvoiceNumber)}`;
         }
 
         const res = await fetch(url, {
