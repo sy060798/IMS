@@ -6,7 +6,9 @@ let dataAktivasi = [];
 
 async function loadAktivasi() {
 
-    const all = await getWO();
+    const res = await getWO();
+
+    const all = Array.isArray(res) ? res : (res?.data || []);
 
     dataAktivasi = all.filter(item => item.jenis === "Aktivasi");
 
@@ -25,10 +27,13 @@ function renderTable() {
 
         html += `
         <tr>
-            <td>${item.woNumber}</td>
-            <td>${item.jobName}</td>
-            <td>${item.city}</td>
-            <td>${item.status}</td>
+            <td>${item.praInvoiceNumber ?? "-"}</td>
+            <td>${item.invoiceNumber ?? "-"}</td>
+            <td>${item.invoiceName ?? "-"}</td>
+            <td>${item.invoiceDate ?? "-"}</td>
+            <td>${item.periode ?? "-"}</td>
+            <td>${item.city ?? "-"}</td>
+            <td>${item.status ?? "-"}</td>
             <td>${formatRupiah(item.woTotal)}</td>
         </tr>
         `;
@@ -44,8 +49,7 @@ function renderTable() {
 
 function formatRupiah(angka) {
 
-    return "Rp " + Number(angka || 0)
-        .toLocaleString("id-ID");
+    return "Rp " + Number(angka || 0).toLocaleString("id-ID");
 }
 
 /* =========================
