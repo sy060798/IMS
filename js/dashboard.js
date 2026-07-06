@@ -20,6 +20,7 @@ async function loadDashboard() {
         renderCards();
         renderCharts();
         renderPendingList();
+        renderProgressList();
 
     } catch (err) {
         console.error("LOAD DASHBOARD ERROR:", err);
@@ -37,13 +38,11 @@ function normalizeStatus(status) {
 }
 
 function normalizeNumber(val) {
-    return Number(
-        String(val || 0).replace(/[^0-9]/g, "")
-    ) || 0;
+    return Number(String(val || 0).replace(/[^0-9]/g, "")) || 0;
 }
 
 /* =========================
-   CARDS (UPDATED + PROGRESS)
+   CARDS
 ========================= */
 function renderCards() {
 
@@ -68,17 +67,14 @@ function renderCards() {
         if (status === "open") {
             open++;
         }
-
         else if (status === "close") {
             close++;
             closeRevenue += total;
         }
-
         else if (status === "pending") {
             pending++;
             pendingRevenue += total;
         }
-
         else if (status === "progress") {
             progress++;
             progressRevenue += total;
@@ -97,8 +93,11 @@ function renderCards() {
 }
 
 /* =========================
-   CHARTS (UPDATED + PROGRESS)
+   CHARTS (SAFE REINIT FIX)
 ========================= */
+let pieChart;
+let barChart;
+
 function renderCharts() {
 
     const pieEl = document.getElementById("statusPie");
@@ -121,8 +120,11 @@ function renderCharts() {
         else if (status === "progress") progress++;
     });
 
-    /* ================= PIE ================= */
-    new Chart(pieEl, {
+    // destroy old chart biar tidak error
+    if (pieChart) pieChart.destroy();
+    if (barChart) barChart.destroy();
+
+    pieChart = new Chart(pieEl, {
         type: "pie",
         data: {
             labels: ["Open", "Close", "Pending", "Progress"],
@@ -138,8 +140,7 @@ function renderCharts() {
         }
     });
 
-    /* ================= BAR ================= */
-    new Chart(barEl, {
+    barChart = new Chart(barEl, {
         type: "bar",
         data: {
             labels: ["Open", "Close", "Pending", "Progress"],
@@ -175,6 +176,28 @@ function renderPendingList() {
     `).join("");
 
     const table = document.getElementById("pendingTable");
+    if (table) table.innerHTML = html;
+}
+
+/* =========================
+   PROGRESS LIST
+========================= */
+function renderProgressList() {
+
+    const progressData = allWO.filter(item =>
+        normalizeStatus(item?.status) === "progress"
+    );
+
+    const html = progressData.map(item => `
+        <tr>
+            <td>${item?.praInvoiceNumber ?? "-"}</td>
+            <td>${item?.invoiceName ?? "-"}</td>
+            <td>${item?.city ?? "-"}</td>
+            <td>${formatRupiah(item?.woTotal)}</td>
+        </tr>
+    `).join("");
+
+    const table = document.getElementById("progressTable");
     if (table) table.innerHTML = html;
 }
 
