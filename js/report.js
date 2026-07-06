@@ -40,7 +40,7 @@ function applyFilter() {
 }
 
 /* =========================
-   RENDER
+   RENDER REPORT (ONLY REQUIRED COLUMNS)
 ========================= */
 function render(data = []) {
 
@@ -57,18 +57,17 @@ function render(data = []) {
         }
 
         return `
-        <tr>
-            <td>${item?.praInvoiceNumber ?? "-"}</td>
-            <td>${item?.invoiceNumber ?? "-"}</td>
-            <td>${item?.invoiceName ?? "-"}</td>
-            <td>${item?.periode ?? "-"}</td>
-            <td>${item?.city ?? "-"}</td>
-            <td>${item?.jenis ?? "-"}</td>
-            <td>${item?.status ?? "-"}</td>
-            <td>${formatRupiah(item?.woTotal)}</td>
-        </tr>
+            <tr>
+                <td>${item?.praInvoiceNumber ?? "-"}</td>
+                <td>${item?.invoiceNumber ?? "-"}</td>
+                <td>${item?.invoiceName ?? "-"}</td>
+                <td>${item?.periode ?? "-"}</td>
+                <td>${item?.city ?? "-"}</td>
+                <td>${item?.jenis ?? "-"}</td>
+                <td>${item?.status ?? "-"}</td>
+                <td>${formatRupiah(item?.woTotal)}</td>
+            </tr>
         `;
-
     }).join("");
 
     const table = document.getElementById("reportTable");
@@ -80,31 +79,15 @@ function render(data = []) {
 }
 
 /* =========================
-   FORMAT YEAR MONTH
-========================= */
-function formatYearMonth(dateStr) {
-
-    if (!dateStr) return "-";
-
-    const date = new Date(dateStr);
-
-    if (isNaN(date)) return "-";
-
-    return date.toISOString().slice(0, 7);
-}
-
-/* =========================
    FORMAT RUPIAH
 ========================= */
 function formatRupiah(angka) {
-
     return "Rp " + Number(angka || 0).toLocaleString("id-ID");
 }
 
 /* =========================
-   SAFE HELPERS
+   SAFE HELPER
 ========================= */
-
 function setText(id, value) {
     const el = document.getElementById(id);
     if (el) el.innerText = value;
@@ -113,6 +96,4 @@ function setText(id, value) {
 /* =========================
    INIT
 ========================= */
-
 loadReport();
-
