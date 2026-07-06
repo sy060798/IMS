@@ -20,7 +20,6 @@ function closeForm() {
 ========================= */
 
 function clearForm() {
-
     const fields = [
         "praInvoiceNumber",
         "invoiceNumber",
@@ -62,12 +61,36 @@ async function saveWO() {
         return;
     }
 
+    // =========================
+    // ANTI DUPLIKAT
+    // =========================
+    const exists = woData.some(item =>
+        String(item?.praInvoiceNumber).trim() === String(data.praInvoiceNumber).trim()
+    );
+
+    if (exists && !editMode) {
+        alert("Pra Invoice sudah ada (duplikat)");
+        return;
+    }
+
     try {
 
+        let result;
+
         if (editMode) {
-            await updateWO(data);
+            result = await updateWO(data);
         } else {
-            await addWO(data);
+            result = await addWO(data);
+        }
+
+        console.log("SAVE RESPONSE:", result);
+
+        // =========================
+        // VALIDASI RESPONSE API
+        // =========================
+        if (!result || result.status === false) {
+            alert(result?.message || "Gagal menyimpan data ke server");
+            return;
         }
 
         closeForm();
@@ -75,6 +98,7 @@ async function saveWO() {
 
     } catch (err) {
         console.error("SAVE ERROR:", err);
+        alert("Terjadi kesalahan saat menyimpan data");
     }
 }
 
@@ -91,7 +115,6 @@ async function loadTable() {
         woData = Array.isArray(res) ? res : (res?.data || []);
 
         renderTable(woData);
-
         syncCityFilter();
 
     } catch (err) {
@@ -110,7 +133,10 @@ function editWO(praInvoiceNumber) {
         String(x?.praInvoiceNumber).trim() === String(praInvoiceNumber).trim()
     );
 
-    if (!item) return;
+    if (!item) {
+        alert("Data tidak ditemukan");
+        return;
+    }
 
     editMode = true;
     openForm();
@@ -124,6 +150,31 @@ function editWO(praInvoiceNumber) {
     setValue("woTotal", item.woTotal);
     setValue("status", item.status);
     setValue("jenis", item.jenis);
+}
+
+/* =========================
+   DELETE
+========================= */
+
+async function hapusWO(praInvoiceNumber) {
+
+    if (!confirm("Yakin hapus data ini?")) return;
+
+    try {
+
+        const result = await deleteWO(praInvoiceNumber);
+
+        if (!result || result.status === false) {
+            alert(result?.message || "Gagal hapus data");
+            return;
+        }
+
+        await loadTable();
+
+    } catch (err) {
+        console.error("DELETE ERROR:", err);
+        alert("Gagal menghapus data");
+    }
 }
 
 /* =========================
@@ -167,7 +218,7 @@ function renderTable(data = []) {
     if (!tbody) return;
 
     if (!data.length) {
-        tbody.innerHTML = `<tr><td colspan="7">No Data</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9">No Data</td></tr>`;
         return;
     }
 
@@ -191,23 +242,7 @@ function renderTable(data = []) {
 }
 
 /* =========================
-   DELETE
-========================= */
-
-async function hapusWO(praInvoiceNumber) {
-
-    if (!confirm("Yakin hapus data ini?")) return;
-
-    try {
-        await deleteWO(praInvoiceNumber);
-        await loadTable();
-    } catch (err) {
-        console.error("DELETE ERROR:", err);
-    }
-}
-
-/* =========================
-   CITY FILTER AUTO SYNC
+   CITY FILTER SYNC
 ========================= */
 
 function syncCityFilter() {
@@ -217,7 +252,8 @@ function syncCityFilter() {
 
     const cities = [...new Set(woData.map(x => x.city).filter(Boolean))];
 
-    select.innerHTML = `<option value="">Semua Kota</option>` +
+    select.innerHTML =
+        `<option value="">Semua Kota</option>` +
         cities.map(c => `<option value="${c}">${c}</option>`).join("");
 }
 
