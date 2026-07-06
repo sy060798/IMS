@@ -65,15 +65,9 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
                 <p id="totalPending">0</p>
             </div>
 
-            <!-- 🔥 NEW STATUS -->
             <div class="card">
                 <h3>Total Progress</h3>
                 <p id="totalProgress">0</p>
-            </div>
-
-            <div class="card">
-                <h3>Progress Revenue</h3>
-                <p id="totalProgressRevenue">Rp 0</p>
             </div>
 
             <div class="card">
@@ -84,6 +78,11 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
             <div class="card">
                 <h3>Pending Revenue</h3>
                 <p id="totalPendingRevenue">Rp 0</p>
+            </div>
+
+            <div class="card">
+                <h3>Progress Revenue</h3>
+                <p id="totalProgressRevenue">Rp 0</p>
             </div>
 
         </section>
@@ -103,25 +102,40 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 
         </section>
 
-        <!-- PENDING LIST -->
-        <section class="table-box">
+        <!-- LIST SECTION (PENDING + PROGRESS) -->
+        <section class="table-box" style="display:flex; gap:20px;">
 
-            <h2>Pending List</h2>
+            <!-- PENDING -->
+            <div style="flex:1;">
+                <h2>Pending List</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Pra Invoice</th>
+                            <th>Name</th>
+                            <th>City</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pendingTable"></tbody>
+                </table>
+            </div>
 
-            <table>
-
-                <thead>
-                    <tr>
-                        <th>Pra Invoice</th>
-                        <th>Name</th>
-                        <th>City</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-
-                <tbody id="pendingTable"></tbody>
-
-            </table>
+            <!-- PROGRESS -->
+            <div style="flex:1;">
+                <h2>Progress List</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Pra Invoice</th>
+                            <th>Name</th>
+                            <th>City</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="progressTable"></tbody>
+                </table>
+            </div>
 
         </section>
 
