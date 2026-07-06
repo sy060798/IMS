@@ -22,8 +22,8 @@ async function loadReport() {
 ========================= */
 function applyFilter() {
 
-    let status = document.getElementById("filterStatus").value;
-    let jenis = document.getElementById("filterJenis").value;
+    const status = document.getElementById("filterStatus").value;
+    const jenis = document.getElementById("filterJenis").value;
 
     let data = allData;
 
@@ -40,7 +40,6 @@ function applyFilter() {
     render(data);
 }
 
-
 /* =========================
    RENDER
 ========================= */
@@ -54,14 +53,19 @@ function render(data) {
     data.forEach(item => {
 
         totalHarga += Number(item.woTotal || 0);
-        if (item.city) kotaSet.add(item.city);
+
+        if (item.city) {
+            kotaSet.add(item.city);
+        }
 
         html += `
         <tr>
-            <td>${item.woNumber ?? "-"}</td>
-            <td>${item.jobName ?? "-"}</td>
+            <td>${item.praInvoiceNumber ?? "-"}</td>
+            <td>${item.invoiceNumber ?? "-"}</td>
+            <td>${item.invoiceName ?? "-"}</td>
+            <td>${item.invoiceDate ?? "-"}</td>
+            <td>${item.periode ?? "-"}</td>
             <td>${item.city ?? "-"}</td>
-            <td>${item.woEnd ?? "-"}</td>
             <td>${item.jenis ?? "-"}</td>
             <td>${item.status ?? "-"}</td>
             <td>${formatRupiah(item.woTotal)}</td>
@@ -77,11 +81,9 @@ function render(data) {
     document.getElementById("rTotalKota").innerText = kotaSet.size;
 }
 
-
-   /* =========================
-   FORMAT FUNCTION (INI TEMPATNYA)
+/* =========================
+   FORMAT YEAR MONTH
 ========================= */
-
 function formatYearMonth(dateStr) {
 
     if (!dateStr) return "-";
