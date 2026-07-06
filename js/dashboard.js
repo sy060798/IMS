@@ -27,7 +27,7 @@ async function loadDashboard() {
 }
 
 /* =========================
-   NORMALIZER (IMPORTANT)
+   NORMALIZER
 ========================= */
 function normalizeStatus(status) {
     return (status || "")
@@ -43,17 +43,20 @@ function normalizeNumber(val) {
 }
 
 /* =========================
-   CARDS (FIXED ACCURATE)
+   CARDS (UPDATED + PROGRESS)
 ========================= */
 function renderCards() {
 
     let revenue = 0;
+
     let open = 0;
     let close = 0;
     let pending = 0;
+    let progress = 0;
 
     let closeRevenue = 0;
     let pendingRevenue = 0;
+    let progressRevenue = 0;
 
     allWO.forEach(item => {
 
@@ -66,14 +69,19 @@ function renderCards() {
             open++;
         }
 
-        if (status === "close") {
+        else if (status === "close") {
             close++;
             closeRevenue += total;
         }
 
-        if (status === "pending") {
+        else if (status === "pending") {
             pending++;
             pendingRevenue += total;
+        }
+
+        else if (status === "progress") {
+            progress++;
+            progressRevenue += total;
         }
     });
 
@@ -81,13 +89,15 @@ function renderCards() {
     setText("totalOpen", open);
     setText("totalClose", close);
     setText("totalPending", pending);
+    setText("totalProgress", progress);
 
     setText("totalCloseRevenue", formatRupiah(closeRevenue));
     setText("totalPendingRevenue", formatRupiah(pendingRevenue));
+    setText("totalProgressRevenue", formatRupiah(progressRevenue));
 }
 
 /* =========================
-   CHARTS
+   CHARTS (UPDATED + PROGRESS)
 ========================= */
 function renderCharts() {
 
@@ -99,34 +109,48 @@ function renderCharts() {
     let open = 0;
     let close = 0;
     let pending = 0;
+    let progress = 0;
 
     allWO.forEach(item => {
 
         const status = normalizeStatus(item?.status);
 
         if (status === "open") open++;
-        if (status === "close") close++;
-        if (status === "pending") pending++;
+        else if (status === "close") close++;
+        else if (status === "pending") pending++;
+        else if (status === "progress") progress++;
     });
 
+    /* ================= PIE ================= */
     new Chart(pieEl, {
         type: "pie",
         data: {
-            labels: ["Open", "Close", "Pending"],
+            labels: ["Open", "Close", "Pending", "Progress"],
             datasets: [{
-                data: [open, close, pending],
-                backgroundColor: ["#f59e0b", "#10b981", "#ef4444"]
+                data: [open, close, pending, progress],
+                backgroundColor: [
+                    "#f59e0b",
+                    "#10b981",
+                    "#ef4444",
+                    "#3b82f6"
+                ]
             }]
         }
     });
 
+    /* ================= BAR ================= */
     new Chart(barEl, {
         type: "bar",
         data: {
-            labels: ["Open", "Close"],
+            labels: ["Open", "Close", "Pending", "Progress"],
             datasets: [{
-                data: [open, close],
-                backgroundColor: ["#f59e0b", "#10b981"]
+                data: [open, close, pending, progress],
+                backgroundColor: [
+                    "#f59e0b",
+                    "#10b981",
+                    "#ef4444",
+                    "#3b82f6"
+                ]
             }]
         }
     });
