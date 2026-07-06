@@ -6,7 +6,9 @@ let allWO = [];
 
 async function loadDashboard() {
 
-    allWO = await getWO();
+    const res = await getWO();
+
+    allWO = Array.isArray(res) ? res : (res?.data || []);
 
     renderCards();
     renderRecentTable();
@@ -20,15 +22,14 @@ async function loadDashboard() {
 
 function renderCards() {
 
-    let totalWO = allWO.length;
+    const totalWO = allWO.length;
 
-    let totalHarga = allWO.reduce((sum, item) => {
+    const totalHarga = allWO.reduce((sum, item) => {
         return sum + Number(item.woTotal || 0);
     }, 0);
 
-    let aktivasi = allWO.filter(x => x.jenis === "Aktivasi").length;
-
-    let maintenance = allWO.filter(x => x.jenis === "Maintenance").length;
+    const aktivasi = allWO.filter(x => x.jenis === "Aktivasi").length;
+    const maintenance = allWO.filter(x => x.jenis === "Maintenance").length;
 
     document.getElementById("totalWO").innerText = totalWO;
     document.getElementById("totalHarga").innerText = formatRupiah(totalHarga);
@@ -42,7 +43,7 @@ function renderCards() {
 
 function renderRecentTable() {
 
-    let recent = allWO.slice(-5).reverse();
+    const recent = allWO.slice(-5).reverse();
 
     let html = "";
 
@@ -50,10 +51,11 @@ function renderRecentTable() {
 
         html += `
         <tr>
-            <td>${item.woNumber}</td>
-            <td>${item.jobName}</td>
-            <td>${item.city}</td>
-            <td>${item.status}</td>
+            <td>${item.praInvoiceNumber ?? "-"}</td>
+            <td>${item.invoiceNumber ?? "-"}</td>
+            <td>${item.invoiceName ?? "-"}</td>
+            <td>${item.city ?? "-"}</td>
+            <td>${item.status ?? "-"}</td>
             <td>${formatRupiah(item.woTotal)}</td>
         </tr>
         `;
@@ -64,17 +66,25 @@ function renderRecentTable() {
 }
 
 /* =========================
-   CHART WO PER BULAN
+   CHART INVOICE PER BULAN
 ========================= */
 
 function renderChartBulan() {
 
-    let bulanCount = {};
+    const bulanCount = {};
 
     allWO.forEach(item => {
 
-        let date = new Date(item.woStart);
-        let bulan = date.toLocaleString("id-ID", { month: "short" });
+        if (!item.invoiceDate) return;
+
+        const date = new Date(item.invoiceDate);
+
+        if (isNaN(date)) return;
+
+        const bulan = date.toLocaleString("id-ID", {
+            month: "short",
+            year: "numeric"
+        });
 
         bulanCount[bulan] = (bulanCount[bulan] || 0) + 1;
     });
@@ -86,7 +96,7 @@ function renderChartBulan() {
         data: {
             labels: Object.keys(bulanCount),
             datasets: [{
-                label: "WO Per Bulan",
+                label: "Invoice per Bulan",
                 data: Object.values(bulanCount),
                 backgroundColor: "#2563eb"
             }]
@@ -96,16 +106,16 @@ function renderChartBulan() {
 }
 
 /* =========================
-   CHART WO PER KOTA
+   CHART PER KOTA
 ========================= */
 
 function renderChartKota() {
 
-    let kotaCount = {};
+    const kotaCount = {};
 
     allWO.forEach(item => {
 
-        let kota = item.city || "Unknown";
+        const kota = item.city || "Unknown";
 
         kotaCount[kota] = (kotaCount[kota] || 0) + 1;
     });
@@ -123,7 +133,10 @@ function renderChartKota() {
                     "#10b981",
                     "#f59e0b",
                     "#ef4444",
-                    "#8b5cf6"
+                    "#8b5cf6",
+                    "#06b6d4",
+                    "#ec4899",
+                    "#84cc16"
                 ]
             }]
         }
@@ -137,8 +150,7 @@ function renderChartKota() {
 
 function formatRupiah(angka) {
 
-    return "Rp " + Number(angka || 0)
-        .toLocaleString("id-ID");
+    return "Rp " + Number(angka || 0).toLocaleString("id-ID");
 }
 
 /* =========================
