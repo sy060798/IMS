@@ -2,7 +2,7 @@ let editMode = false;
 let woData = [];
 
 /* =========================
-   TOAST NOTIFICATION
+   TOAST
 ========================= */
 function showToast(message, type = "success") {
 
@@ -27,9 +27,7 @@ function showToast(message, type = "success") {
         document.body.appendChild(toast);
     }
 
-    toast.style.background =
-        type === "success" ? "#28a745" : "#dc3545";
-
+    toast.style.background = type === "success" ? "#28a745" : "#dc3545";
     toast.innerHTML = message;
     toast.style.opacity = "1";
 
@@ -41,17 +39,16 @@ function showToast(message, type = "success") {
 }
 
 /* =========================
-   DATE FORMAT
+   FORMAT DATE
 ========================= */
 function formatDateOnly(dateStr) {
 
     if (!dateStr) return "-";
 
-    const date = new Date(dateStr);
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
 
-    if (isNaN(date.getTime())) return dateStr;
-
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 /* =========================
@@ -104,7 +101,7 @@ async function saveWO() {
     );
 
     if (exists && !editMode) {
-        showToast("Data duplikat", "error");
+        showToast("Data sudah ada", "error");
         return;
     }
 
@@ -115,13 +112,12 @@ async function saveWO() {
             : await addWO(data);
 
         if (!result || result.status === false) {
-            showToast(result?.message || "Gagal simpan", "error");
+            showToast("Gagal simpan", "error");
             return;
         }
 
         closeForm();
         await loadTable();
-
         showToast(editMode ? "Update sukses" : "Tambah sukses");
 
     } catch (err) {
@@ -130,8 +126,9 @@ async function saveWO() {
     }
 }
 
+
 /* =========================
-   LOAD TABLE
+   LOAD DATA
 ========================= */
 async function loadTable() {
 
@@ -139,9 +136,14 @@ async function loadTable() {
 
         const res = await getWO();
 
-        woData = Array.isArray(res) ? res : (res?.data || []);
+        woData = (Array.isArray(res) ? res : res?.data || [])
+            .map(x => ({
+                ...x,
+                city: (x.city || "").trim(),
+                status: (x.status || "").trim()
+            }));
 
-        applyFilter(); // penting: langsung pakai filter utama
+        applyFilter();
 
     } catch (err) {
         console.error(err);
@@ -155,7 +157,7 @@ async function loadTable() {
 ========================= */
 function editWO(id) {
 
-    const item = woData.find(x => String(x?.praInvoiceNumber) === String(id));
+    const item = woData.find(x => String(x.praInvoiceNumber) === String(id));
 
     if (!item) return showToast("Data tidak ditemukan", "error");
 
@@ -178,13 +180,13 @@ function editWO(id) {
 ========================= */
 async function hapusWO(id) {
 
-    if (!confirm("Hapus data ini?")) return;
+    if (!confirm("Hapus data?")) return;
 
     try {
 
-        const result = await deleteWO(id);
+        const res = await deleteWO(id);
 
-        if (!result || result.status === false) {
+        if (!res || res.status === false) {
             return showToast("Gagal hapus", "error");
         }
 
@@ -198,7 +200,7 @@ async function hapusWO(id) {
 }
 
 /* =========================
-   FILTER (FIX FINAL CASCADING)
+   FILTER STRICT FIX (ANTI GHOST CITY)
 ========================= */
 function applyFilter() {
 
@@ -208,24 +210,18 @@ function applyFilter() {
 
     let filtered = [...woData];
 
-    // 1. STATUS FILTER (STRICT)
+    /* STATUS FILTER STRICT */
     if (status) {
         filtered = filtered.filter(x =>
             String(x.status).trim().toLowerCase() === status.trim().toLowerCase()
         );
     }
 
-    // 2. CLEAN DATA (hindari spasi & null)
-    filtered = filtered.map(x => ({
-        ...x,
-        city: (x.city || "").trim()
-    }));
-
-    // 3. BUILD CITY OPTIONS (ONLY VALID DATA)
+    /* BUILD CITY LIST ONLY FROM FILTERED DATA */
     const cities = [...new Set(
         filtered
-            .map(x => x.city)
-            .filter(c => c && c.length > 0)
+            .map(x => (x.city || "").trim())
+            .filter(Boolean)
     )];
 
     if (cityEl) {
@@ -239,14 +235,14 @@ function applyFilter() {
         cityEl.value = cities.includes(prev) ? prev : "";
     }
 
-    // 4. CITY FILTER
+    /* CITY FILTER */
     const city = cityEl?.value || "";
 
     if (city) {
         filtered = filtered.filter(x => x.city === city);
     }
 
-    // 5. SEARCH FILTER
+    /* SEARCH FILTER */
     if (search) {
         filtered = filtered.filter(x =>
             (x.praInvoiceNumber || "").toLowerCase().includes(search) ||
@@ -258,13 +254,13 @@ function applyFilter() {
     renderTable(filtered);
 }
 
+
 /* =========================
    RENDER TABLE
 ========================= */
 function renderTable(data = []) {
 
     const tbody = document.getElementById("tableBody");
-
     if (!tbody) return;
 
     if (!data.length) {
