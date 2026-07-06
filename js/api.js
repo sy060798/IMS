@@ -1,7 +1,7 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbwE9WLiyjp8QpejmNC_iRzpSm3sL0xHb4k3jn3FoU0XqsG-19-bQXQqaFkYzp25PFZZ/exec";
 
 /* =========================
-   SAFE GET
+   GET DATA (SAFE)
 ========================= */
 async function getWO() {
     try {
@@ -11,10 +11,10 @@ async function getWO() {
 
         const data = await res.json();
 
-        return Array.isArray(data)
-            ? data
-            : (data?.data || []);
+        if (Array.isArray(data)) return data;
+        if (Array.isArray(data?.data)) return data.data;
 
+        return [];
     } catch (err) {
         console.error("GET ERROR:", err);
         return [];
@@ -22,30 +22,29 @@ async function getWO() {
 }
 
 /* =========================
-   BASE CALL (SAFE)
+   BASE CALL (FIXED → GET ONLY)
 ========================= */
 async function callAPI(params) {
-
     try {
 
-        const url = API_URL + "?action=" + params.action;
+        let url = API_URL + "?action=" + params.action;
+
+        if (params.data) {
+            url += "&data=" + encodeURIComponent(JSON.stringify(params.data));
+        }
+
+        if (params.praInvoiceNumber) {
+            url += "&praInvoiceNumber=" + encodeURIComponent(params.praInvoiceNumber);
+        }
 
         const res = await fetch(url, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(params),
+            method: "GET",
             cache: "no-cache"
         });
 
         const result = await res.json();
 
         console.log("API RESPONSE:", result);
-
-        if (!result || result.status === false) {
-            console.error("API FAILED:", result);
-        }
 
         return result;
 
