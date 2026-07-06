@@ -8,7 +8,7 @@ window.addEventListener("load", () => {
 });
 
 /* =========================
-   LOAD
+   LOAD DASHBOARD
 ========================= */
 async function loadDashboard() {
 
@@ -22,12 +22,28 @@ async function loadDashboard() {
         renderPendingList();
 
     } catch (err) {
-        console.error(err);
+        console.error("LOAD DASHBOARD ERROR:", err);
     }
 }
 
 /* =========================
-   CARDS
+   NORMALIZER (IMPORTANT)
+========================= */
+function normalizeStatus(status) {
+    return (status || "")
+        .toString()
+        .trim()
+        .toLowerCase();
+}
+
+function normalizeNumber(val) {
+    return Number(
+        String(val || 0).replace(/[^0-9]/g, "")
+    ) || 0;
+}
+
+/* =========================
+   CARDS (FIXED ACCURATE)
 ========================= */
 function renderCards() {
 
@@ -41,17 +57,21 @@ function renderCards() {
 
     allWO.forEach(item => {
 
-        const total = Number(item?.woTotal || 0);
+        const status = normalizeStatus(item?.status);
+        const total = normalizeNumber(item?.woTotal);
+
         revenue += total;
 
-        if (item.status === "Open") open++;
+        if (status === "open") {
+            open++;
+        }
 
-        if (item.status === "Close") {
+        if (status === "close") {
             close++;
             closeRevenue += total;
         }
 
-        if (item.status === "Pending") {
+        if (status === "pending") {
             pending++;
             pendingRevenue += total;
         }
@@ -81,9 +101,12 @@ function renderCharts() {
     let pending = 0;
 
     allWO.forEach(item => {
-        if (item.status === "Open") open++;
-        if (item.status === "Close") close++;
-        if (item.status === "Pending") pending++;
+
+        const status = normalizeStatus(item?.status);
+
+        if (status === "open") open++;
+        if (status === "close") close++;
+        if (status === "pending") pending++;
     });
 
     new Chart(pieEl, {
@@ -114,9 +137,11 @@ function renderCharts() {
 ========================= */
 function renderPendingList() {
 
-    const pending = allWO.filter(x => x.status === "Pending");
+    const pendingData = allWO.filter(item =>
+        normalizeStatus(item?.status) === "pending"
+    );
 
-    const html = pending.map(item => `
+    const html = pendingData.map(item => `
         <tr>
             <td>${item?.praInvoiceNumber ?? "-"}</td>
             <td>${item?.invoiceName ?? "-"}</td>
