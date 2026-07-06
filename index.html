@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System Dashboard</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="css/style.css">
+<title>System Dashboard</title>
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 
 <body>
@@ -26,39 +26,13 @@
         <ul class="menu">
 
             <li class="active">
-                <a href="index.html">
-                    <i class="fa-solid fa-house"></i>
-                    Dashboard
-                </a>
+                <a href="index.html"><i class="fa-solid fa-house"></i> Dashboard</a>
             </li>
 
-            <li>
-                <a href="wo.html">
-                    <i class="fa-solid fa-table"></i>
-                    Data
-                </a>
-            </li>
-
-            <li>
-                <a href="aktivasi.html">
-                    <i class="fa-solid fa-bolt"></i>
-                    Aktivasi
-                </a>
-            </li>
-
-            <li>
-                <a href="maintenance.html">
-                    <i class="fa-solid fa-screwdriver-wrench"></i>
-                    Maintenance
-                </a>
-            </li>
-
-            <li>
-                <a href="report.html">
-                    <i class="fa-solid fa-chart-column"></i>
-                    Report
-                </a>
-            </li>
+            <li><a href="wo.html"><i class="fa-solid fa-table"></i> Data</a></li>
+            <li><a href="aktivasi.html"><i class="fa-solid fa-bolt"></i> Aktivasi</a></li>
+            <li><a href="maintenance.html"><i class="fa-solid fa-screwdriver-wrench"></i> Maintenance</a></li>
+            <li><a href="report.html"><i class="fa-solid fa-chart-column"></i> Report</a></li>
 
         </ul>
 
@@ -67,24 +41,12 @@
     <!-- Main -->
     <main class="main">
 
-        <!-- Header -->
         <header class="topbar">
-
             <h1>Dashboard</h1>
-
-            <div class="user">
-                Admin
-            </div>
-
         </header>
 
-        <!-- Card Statistik -->
+        <!-- CARD -->
         <section class="cards">
-
-            <div class="card">
-                <h3>Total Data</h3>
-                <p id="totalWO">0</p>
-            </div>
 
             <div class="card">
                 <h3>Total Revenue</h3>
@@ -92,55 +54,34 @@
             </div>
 
             <div class="card">
-                <h3>Aktivasi</h3>
-                <p id="totalAktivasi">0</p>
+                <h3>Total Open</h3>
+                <p id="totalOpen">0</p>
             </div>
 
             <div class="card">
-                <h3>Maintenance</h3>
-                <p id="totalMaintenance">0</p>
+                <h3>Total Close</h3>
+                <p id="totalClose">0</p>
+            </div>
+
+            <div class="card">
+                <h3>Total Pending</h3>
+                <p id="totalPending">0</p>
             </div>
 
         </section>
 
-        <!-- Grafik -->
+        <!-- CHART -->
         <section class="chart-box">
 
             <div class="chart">
-                <h3>Invoice Per Bulan</h3>
-                <canvas id="bulanChart"></canvas>
+                <h3>Distribusi Status</h3>
+                <canvas id="statusPie"></canvas>
             </div>
 
             <div class="chart">
-                <h3>Data Per Kota</h3>
-                <canvas id="kotaChart"></canvas>
+                <h3>Open vs Close</h3>
+                <canvas id="statusBar"></canvas>
             </div>
-
-        </section>
-
-        <!-- Tabel Data Terbaru -->
-        <section class="table-box">
-
-            <h2>Data Terbaru</h2>
-
-            <table>
-
-                <thead>
-
-                    <tr>
-                        <th>Pra Invoice</th>
-                        <th>Invoice Number</th>
-                        <th>Invoice Name</th>
-                        <th>City</th>
-                        <th>Status</th>
-                        <th>Total</th>
-                    </tr>
-
-                </thead>
-
-                <tbody id="recentTable"></tbody>
-
-            </table>
 
         </section>
 
@@ -151,7 +92,6 @@
 <!-- Chart JS -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Scripts -->
 <script src="js/api.js"></script>
 <script src="js/dashboard.js"></script>
 
