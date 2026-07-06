@@ -2,48 +2,69 @@
 <html lang="id">
 <head>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Login - WO Management</title>
+<title>Login - System</title>
 
-    <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css">
 
-    <style>
+<style>
 
-        body{
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            height:100vh;
-            background:#f4f6f9;
-        }
+body{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    background:#f4f6f9;
+    font-family: Arial, sans-serif;
+}
 
-        .login-box{
-            width:380px;
-            background:#fff;
-            padding:35px;
-            border-radius:12px;
-            box-shadow:0 5px 20px rgba(0,0,0,.15);
-        }
+.login-box{
+    width:380px;
+    background:#fff;
+    padding:35px;
+    border-radius:12px;
+    box-shadow:0 5px 20px rgba(0,0,0,.15);
+}
 
-        .login-box h2{
-            text-align:center;
-            margin-bottom:30px;
-            color:#2563eb;
-        }
+.login-box h2{
+    text-align:center;
+    margin-bottom:25px;
+    color:#2563eb;
+}
 
-        .login-box button{
-            width:100%;
-        }
+.login-box input{
+    width:100%;
+    padding:10px;
+    margin-bottom:10px;
+    border:1px solid #ddd;
+    border-radius:6px;
+    outline:none;
+}
 
-        .error{
-            color:red;
-            text-align:center;
-            margin-top:15px;
-        }
+.login-box button{
+    width:100%;
+    padding:10px;
+    background:#2563eb;
+    color:#fff;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
 
-    </style>
+.login-box button:hover{
+    background:#1d4ed8;
+}
+
+.error{
+    color:red;
+    text-align:center;
+    margin-top:10px;
+    font-size:14px;
+}
+
+</style>
 
 </head>
 
@@ -51,21 +72,12 @@
 
 <div class="login-box">
 
-    <h2>WO Management</h2>
+    <h2>System Login</h2>
 
-    <input
-        type="text"
-        id="username"
-        placeholder="Username">
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
 
-    <input
-        type="password"
-        id="password"
-        placeholder="Password">
-
-    <button onclick="login()">
-        Login
-    </button>
+    <button onclick="login()">Login</button>
 
     <p id="error" class="error"></p>
 
@@ -73,28 +85,41 @@
 
 <script>
 
+/* =========================
+   AUTO REDIRECT IF LOGGED IN
+========================= */
+if(localStorage.getItem("login") === "true"){
+    window.location = "index.html";
+}
+
+/* =========================
+   LOGIN FUNCTION
+========================= */
+
 function login(){
 
-    const username=document.getElementById("username").value;
-    const password=document.getElementById("password").value;
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
 
-    // sementara hardcode
-    if(username==="admin" && password==="admin123"){
-
-        localStorage.setItem("login","true");
-
-        window.location="index.html";
-
-    }else{
-
-        document.getElementById("error").innerHTML="Username atau Password salah";
-
+    if(username === "" || password === ""){
+        document.getElementById("error").innerText = "Isi username & password";
+        return;
     }
 
+    // SIMPLE AUTH (sementara)
+    if(username === "admin" && password === "admin123"){
+
+        localStorage.setItem("login", "true");
+
+        window.location = "index.html";
+
+    } else {
+
+        document.getElementById("error").innerText = "Username atau Password salah";
+    }
 }
 
 </script>
 
 </body>
 </html>
-
