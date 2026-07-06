@@ -208,13 +208,25 @@ function applyFilter() {
 
     let filtered = [...woData];
 
-    // 1. STATUS FILTER
+    // 1. STATUS FILTER (STRICT)
     if (status) {
-        filtered = filtered.filter(x => x.status === status);
+        filtered = filtered.filter(x =>
+            String(x.status).trim().toLowerCase() === status.trim().toLowerCase()
+        );
     }
 
-    // 2. BUILD CITY LIST DARI STATUS TERFILTER
-    const cities = [...new Set(filtered.map(x => x.city).filter(Boolean))];
+    // 2. CLEAN DATA (hindari spasi & null)
+    filtered = filtered.map(x => ({
+        ...x,
+        city: (x.city || "").trim()
+    }));
+
+    // 3. BUILD CITY OPTIONS (ONLY VALID DATA)
+    const cities = [...new Set(
+        filtered
+            .map(x => x.city)
+            .filter(c => c && c.length > 0)
+    )];
 
     if (cityEl) {
 
@@ -227,14 +239,14 @@ function applyFilter() {
         cityEl.value = cities.includes(prev) ? prev : "";
     }
 
-    // 3. CITY FILTER
+    // 4. CITY FILTER
     const city = cityEl?.value || "";
 
     if (city) {
         filtered = filtered.filter(x => x.city === city);
     }
 
-    // 4. SEARCH
+    // 5. SEARCH FILTER
     if (search) {
         filtered = filtered.filter(x =>
             (x.praInvoiceNumber || "").toLowerCase().includes(search) ||
