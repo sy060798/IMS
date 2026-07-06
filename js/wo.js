@@ -43,7 +43,7 @@ function clearForm() {
 }
 
 /* =========================
-   SAVE DATA (ADD / UPDATE)
+   SAVE (ADD / UPDATE)
 ========================= */
 
 async function saveWO() {
@@ -68,18 +68,44 @@ async function saveWO() {
         return;
     }
 
-    if (editMode) {
-        await updateWO(data);
-    } else {
-        await addWO(data);
-    }
+    try {
 
-    closeForm();
-    await loadTable();
+        if (editMode) {
+            await updateWO(data);
+        } else {
+            await addWO(data);
+        }
+
+        closeForm();
+        await loadTable();
+
+    } catch (err) {
+        console.error("SAVE ERROR:", err);
+    }
 }
 
 /* =========================
-   EDIT DATA
+   LOAD TABLE
+========================= */
+
+async function loadTable() {
+
+    try {
+
+        const res = await getWO();
+
+        woData = Array.isArray(res) ? res : (res?.data || []);
+
+        renderTable(woData);
+
+    } catch (err) {
+        console.error("LOAD ERROR:", err);
+        woData = [];
+    }
+}
+
+/* =========================
+   EDIT
 ========================= */
 
 function editWO(praInvoiceNumber) {
@@ -105,50 +131,30 @@ function editWO(praInvoiceNumber) {
 }
 
 /* =========================
-   LOAD TABLE
-========================= */
-
-async function loadTable() {
-
-    try {
-
-        const res = await getWO();
-
-        woData = Array.isArray(res) ? res : (res?.data || []);
-
-        renderTable(woData);
-
-    } catch (err) {
-        console.error("LOAD ERROR:", err);
-        woData = [];
-    }
-}
-
-/* =========================
    FILTER
 ========================= */
 
 function applyFilter() {
 
-    const search = (id("searchWO") || "").toLowerCase();
-    const status = id("filterStatus");
-    const city = id("filterCity");
+    const search = (document.getElementById("searchWO")?.value || "").toLowerCase();
+    const status = document.getElementById("filterStatus")?.value || "";
+    const city = document.getElementById("filterCity")?.value || "";
 
     let filtered = [...woData];
 
     if (search) {
         filtered = filtered.filter(item =>
-            item?.praInvoiceNumber?.toLowerCase().includes(search) ||
-            item?.invoiceNumber?.toLowerCase().includes(search) ||
-            item?.invoiceName?.toLowerCase().includes(search)
+            (item?.praInvoiceNumber || "").toLowerCase().includes(search) ||
+            (item?.invoiceNumber || "").toLowerCase().includes(search) ||
+            (item?.invoiceName || "").toLowerCase().includes(search)
         );
     }
 
-    if (status && status !== "All") {
+    if (status) {
         filtered = filtered.filter(item => item.status === status);
     }
 
-    if (city && city !== "Semua Kota") {
+    if (city) {
         filtered = filtered.filter(item => item.city === city);
     }
 
@@ -162,10 +168,9 @@ function applyFilter() {
 function renderTable(data = []) {
 
     const tbody = document.getElementById("tableBody");
-
     if (!tbody) return;
 
-    if (data.length === 0) {
+    if (!data.length) {
         tbody.innerHTML = `<tr><td colspan="7">No Data</td></tr>`;
         return;
     }
@@ -175,7 +180,7 @@ function renderTable(data = []) {
             <td>${item?.praInvoiceNumber ?? "-"}</td>
             <td>${item?.invoiceNumber ?? "-"}</td>
             <td>${item?.invoiceName ?? "-"}</td>
-            <td>${item?.invoiceDate ?? "-"}</td>
+            <td>${item?.city ?? "-"}</td>
             <td>${item?.status ?? "-"}</td>
             <td>${formatRupiah(item?.woTotal)}</td>
             <td>
@@ -203,17 +208,11 @@ async function hapusWO(praInvoiceNumber) {
 }
 
 /* =========================
-   HELPERS (ANTI ERROR)
+   HELPERS
 ========================= */
 
 function val(id) {
-    const el = document.getElementById(id);
-    return el ? el.value : "";
-}
-
-function id(id) {
-    const el = document.getElementById(id);
-    return el ? el.value : "";
+    return document.getElementById(id)?.value || "";
 }
 
 function setValue(id, value) {
