@@ -23,9 +23,20 @@ function closeForm() {
 function clearForm() {
 
     const fields = [
-        "woNumber","reference","quotation","woStart","woEnd",
-        "jobName","area","city","boq","woTotal",
-        "status","praInvoice","invoice","jenis"
+        "praInvoiceNumber",
+        "invoiceNumber",
+        "invoiceName",
+        "invoiceDate",
+        "periode",
+        "jobName",
+        "area",
+        "city",
+        "boq",
+        "woTotal",
+        "status",
+        "praInvoice",
+        "invoice",
+        "jenis"
     ];
 
     fields.forEach(id => {
@@ -40,11 +51,11 @@ function clearForm() {
 async function saveWO() {
 
     const data = {
-        woNumber: document.getElementById("woNumber").value,
-        reference: document.getElementById("reference").value,
-        quotation: document.getElementById("quotation").value,
-        woStart: document.getElementById("woStart").value,
-        woEnd: document.getElementById("woEnd").value,
+        praInvoiceNumber: document.getElementById("praInvoiceNumber").value,
+        invoiceNumber: document.getElementById("invoiceNumber").value,
+        invoiceName: document.getElementById("invoiceName").value,
+        invoiceDate: document.getElementById("invoiceDate").value,
+        periode: document.getElementById("periode").value,
         jobName: document.getElementById("jobName").value,
         area: document.getElementById("area").value,
         city: document.getElementById("city").value,
@@ -71,20 +82,19 @@ async function saveWO() {
 /* =========================
    EDIT DATA
 ========================= */
-function editWO(woNumber) {
+function editWO(praInvoiceNumber) {
 
-    const item = woData.find(x => x.woNumber == woNumber);
+    const item = woData.find(x => x.praInvoiceNumber == praInvoiceNumber);
     if (!item) return;
 
     editMode = true;
     openForm();
 
-    // isi form otomatis dari data
-    setValue("woNumber", item.woNumber);
-    setValue("reference", item.reference);
-    setValue("quotation", item.quotation);
-    setValue("woStart", item.woStart);
-    setValue("woEnd", item.woEnd);
+    setValue("praInvoiceNumber", item.praInvoiceNumber);
+    setValue("invoiceNumber", item.invoiceNumber);
+    setValue("invoiceName", item.invoiceName);
+    setValue("invoiceDate", item.invoiceDate);
+    setValue("periode", item.periode);
     setValue("jobName", item.jobName);
     setValue("area", item.area);
     setValue("city", item.city);
@@ -130,31 +140,28 @@ async function loadTable() {
 }
 
 /* =========================
-   filter
+   FILTER
 ========================= */
-
 function applyFilter() {
+
     const search = document.getElementById("searchWO")?.value.toLowerCase() || "";
     const status = document.getElementById("filterStatus")?.value || "";
     const city = document.getElementById("filterCity")?.value || "";
 
     let filtered = woData;
 
-    // filter WO number / reference / jobName
     if (search) {
         filtered = filtered.filter(item =>
-            (item.woNumber || "").toLowerCase().includes(search) ||
-            (item.reference || "").toLowerCase().includes(search) ||
-            (item.jobName || "").toLowerCase().includes(search)
+            (item.praInvoiceNumber || "").toLowerCase().includes(search) ||
+            (item.invoiceNumber || "").toLowerCase().includes(search) ||
+            (item.invoiceName || "").toLowerCase().includes(search)
         );
     }
 
-    // filter status
     if (status && status !== "All") {
         filtered = filtered.filter(item => item.status === status);
     }
 
-    // filter city
     if (city && city !== "Semua Kota") {
         filtered = filtered.filter(item => item.city === city);
     }
@@ -169,10 +176,7 @@ function renderTable(data) {
 
     const tbody = document.getElementById("tableBody");
 
-    if (!tbody) {
-        console.error("tableBody not found");
-        return;
-    }
+    if (!tbody) return;
 
     if (!data || data.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7">No Data</td></tr>`;
@@ -185,15 +189,15 @@ function renderTable(data) {
 
         html += `
         <tr>
-            <td>${item.woNumber ?? "-"}</td>
-            <td>${item.reference ?? "-"}</td>
-            <td>${item.jobName ?? "-"}</td>
-            <td>${item.city ?? "-"}</td>
+            <td>${item.praInvoiceNumber ?? "-"}</td>
+            <td>${item.invoiceNumber ?? "-"}</td>
+            <td>${item.invoiceName ?? "-"}</td>
+            <td>${item.invoiceDate ?? "-"}</td>
             <td>${item.status ?? "-"}</td>
             <td>${item.woTotal ?? "-"}</td>
             <td>
-                <button onclick="editWO('${item.woNumber}')">Edit</button>
-                <button onclick="hapusWO('${item.woNumber}')">Hapus</button>
+                <button onclick="editWO('${item.praInvoiceNumber}')">Edit</button>
+                <button onclick="hapusWO('${item.praInvoiceNumber}')">Hapus</button>
             </td>
         </tr>
         `;
@@ -203,15 +207,15 @@ function renderTable(data) {
 }
 
 /* =========================
-   DELETE FIX
+   DELETE
 ========================= */
-async function hapusWO(woNumber) {
+async function hapusWO(praInvoiceNumber) {
 
     if (!confirm("Yakin hapus data ini?")) return;
 
-    console.log("DELETE:", woNumber);
+    console.log("DELETE:", praInvoiceNumber);
 
-    await deleteWO(woNumber);
+    await deleteWO(praInvoiceNumber);
 
     await loadTable();
 }
