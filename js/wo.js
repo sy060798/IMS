@@ -2,15 +2,13 @@ let editMode = false;
 let woData = [];
 
 /* =========================
-   OPEN FORM
+   OPEN / CLOSE FORM
 ========================= */
+
 function openForm() {
     document.getElementById("modalWO").style.display = "block";
 }
 
-/* =========================
-   CLOSE FORM
-========================= */
 function closeForm() {
     document.getElementById("modalWO").style.display = "none";
     clearForm();
@@ -20,6 +18,7 @@ function closeForm() {
 /* =========================
    CLEAR FORM
 ========================= */
+
 function clearForm() {
 
     const fields = [
@@ -34,8 +33,6 @@ function clearForm() {
         "boq",
         "woTotal",
         "status",
-        "praInvoice",
-        "invoice",
         "jenis"
     ];
 
@@ -46,28 +43,30 @@ function clearForm() {
 }
 
 /* =========================
-   SAVE (ADD / UPDATE)
+   SAVE DATA (ADD / UPDATE)
 ========================= */
+
 async function saveWO() {
 
     const data = {
-        praInvoiceNumber: document.getElementById("praInvoiceNumber").value,
-        invoiceNumber: document.getElementById("invoiceNumber").value,
-        invoiceName: document.getElementById("invoiceName").value,
-        invoiceDate: document.getElementById("invoiceDate").value,
-        periode: document.getElementById("periode").value,
-        jobName: document.getElementById("jobName").value,
-        area: document.getElementById("area").value,
-        city: document.getElementById("city").value,
-        boq: document.getElementById("boq").value,
-        woTotal: document.getElementById("woTotal").value,
-        status: document.getElementById("status").value,
-        praInvoice: document.getElementById("praInvoice").value,
-        invoice: document.getElementById("invoice").value,
-        jenis: document.getElementById("jenis").value
+        praInvoiceNumber: val("praInvoiceNumber"),
+        invoiceNumber: val("invoiceNumber"),
+        invoiceName: val("invoiceName"),
+        invoiceDate: val("invoiceDate"),
+        periode: val("periode"),
+        jobName: val("jobName"),
+        area: val("area"),
+        city: val("city"),
+        boq: val("boq"),
+        woTotal: val("woTotal"),
+        status: val("status"),
+        jenis: val("jenis")
     };
 
-    console.log("SAVE DATA:", data);
+    if (!data.praInvoiceNumber) {
+        alert("Pra Invoice Number wajib diisi");
+        return;
+    }
 
     if (editMode) {
         await updateWO(data);
@@ -82,9 +81,10 @@ async function saveWO() {
 /* =========================
    EDIT DATA
 ========================= */
+
 function editWO(praInvoiceNumber) {
 
-    const item = woData.find(x => x.praInvoiceNumber == praInvoiceNumber);
+    const item = woData.find(x => x?.praInvoiceNumber == praInvoiceNumber);
     if (!item) return;
 
     editMode = true;
@@ -101,60 +101,46 @@ function editWO(praInvoiceNumber) {
     setValue("boq", item.boq);
     setValue("woTotal", item.woTotal);
     setValue("status", item.status);
-    setValue("praInvoice", item.praInvoice);
-    setValue("invoice", item.invoice);
     setValue("jenis", item.jenis);
 }
 
-function setValue(id, value) {
-    const el = document.getElementById(id);
-    if (el) el.value = value ?? "";
-}
-
 /* =========================
-   LOAD DATA
+   LOAD TABLE
 ========================= */
+
 async function loadTable() {
 
     try {
 
         const res = await getWO();
 
-        console.log("RAW RESPONSE:", res);
+        woData = Array.isArray(res) ? res : (res?.data || []);
 
-        let data = [];
-
-        if (Array.isArray(res)) {
-            data = res;
-        } else if (res && Array.isArray(res.data)) {
-            data = res.data;
-        }
-
-        woData = data;
-
-        renderTable(data);
+        renderTable(woData);
 
     } catch (err) {
         console.error("LOAD ERROR:", err);
+        woData = [];
     }
 }
 
 /* =========================
    FILTER
 ========================= */
+
 function applyFilter() {
 
-    const search = document.getElementById("searchWO")?.value.toLowerCase() || "";
-    const status = document.getElementById("filterStatus")?.value || "";
-    const city = document.getElementById("filterCity")?.value || "";
+    const search = (id("searchWO") || "").toLowerCase();
+    const status = id("filterStatus");
+    const city = id("filterCity");
 
-    let filtered = woData;
+    let filtered = [...woData];
 
     if (search) {
         filtered = filtered.filter(item =>
-            (item.praInvoiceNumber || "").toLowerCase().includes(search) ||
-            (item.invoiceNumber || "").toLowerCase().includes(search) ||
-            (item.invoiceName || "").toLowerCase().includes(search)
+            item?.praInvoiceNumber?.toLowerCase().includes(search) ||
+            item?.invoiceNumber?.toLowerCase().includes(search) ||
+            item?.invoiceName?.toLowerCase().includes(search)
         );
     }
 
@@ -172,55 +158,75 @@ function applyFilter() {
 /* =========================
    RENDER TABLE
 ========================= */
-function renderTable(data) {
+
+function renderTable(data = []) {
 
     const tbody = document.getElementById("tableBody");
 
     if (!tbody) return;
 
-    if (!data || data.length === 0) {
+    if (data.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7">No Data</td></tr>`;
         return;
     }
 
-    let html = "";
-
-    data.forEach(item => {
-
-        html += `
+    tbody.innerHTML = data.map(item => `
         <tr>
-            <td>${item.praInvoiceNumber ?? "-"}</td>
-            <td>${item.invoiceNumber ?? "-"}</td>
-            <td>${item.invoiceName ?? "-"}</td>
-            <td>${item.invoiceDate ?? "-"}</td>
-            <td>${item.status ?? "-"}</td>
-            <td>${item.woTotal ?? "-"}</td>
+            <td>${item?.praInvoiceNumber ?? "-"}</td>
+            <td>${item?.invoiceNumber ?? "-"}</td>
+            <td>${item?.invoiceName ?? "-"}</td>
+            <td>${item?.invoiceDate ?? "-"}</td>
+            <td>${item?.status ?? "-"}</td>
+            <td>${formatRupiah(item?.woTotal)}</td>
             <td>
-                <button onclick="editWO('${item.praInvoiceNumber}')">Edit</button>
-                <button onclick="hapusWO('${item.praInvoiceNumber}')">Hapus</button>
+                <button onclick="editWO('${item?.praInvoiceNumber}')">Edit</button>
+                <button onclick="hapusWO('${item?.praInvoiceNumber}')">Hapus</button>
             </td>
         </tr>
-        `;
-    });
-
-    tbody.innerHTML = html;
+    `).join("");
 }
 
 /* =========================
    DELETE
 ========================= */
+
 async function hapusWO(praInvoiceNumber) {
 
     if (!confirm("Yakin hapus data ini?")) return;
 
-    console.log("DELETE:", praInvoiceNumber);
+    try {
+        await deleteWO(praInvoiceNumber);
+        await loadTable();
+    } catch (err) {
+        console.error("DELETE ERROR:", err);
+    }
+}
 
-    await deleteWO(praInvoiceNumber);
+/* =========================
+   HELPERS (ANTI ERROR)
+========================= */
 
-    await loadTable();
+function val(id) {
+    const el = document.getElementById(id);
+    return el ? el.value : "";
+}
+
+function id(id) {
+    const el = document.getElementById(id);
+    return el ? el.value : "";
+}
+
+function setValue(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.value = value ?? "";
+}
+
+function formatRupiah(angka) {
+    return "Rp " + Number(angka || 0).toLocaleString("id-ID");
 }
 
 /* =========================
    INIT
 ========================= */
+
 loadTable();
