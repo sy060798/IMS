@@ -33,7 +33,8 @@ body {
     color: white;
     padding: 20px;
     position: fixed;
-    height: 100%;
+    height: 100vh;
+    overflow-y: auto;
 }
 
 .logo h2 {
@@ -59,17 +60,19 @@ body {
     color: #cbd5e1;
     text-decoration: none;
     border-radius: 10px;
-    transition: 0.3s;
+    transition: 0.25s;
 }
 
 .menu a:hover {
     background: #334155;
     color: white;
+    transform: translateX(3px);
 }
 
 .menu .active a {
     background: #2563eb;
     color: white;
+    box-shadow: 0 5px 15px rgba(37,99,235,.4);
 }
 
 /* =========================
@@ -113,6 +116,11 @@ body {
     padding: 20px;
     border-radius: 15px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    transition: 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-3px);
 }
 
 .card h3 {
@@ -154,11 +162,13 @@ body {
     padding: 20px;
     border-radius: 15px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    overflow-x: auto;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 600px;
 }
 
 thead {
@@ -170,10 +180,30 @@ th, td {
     padding: 12px;
     text-align: left;
     border-bottom: 1px solid #e2e8f0;
+    font-size: 14px;
 }
 
 tbody tr:hover {
     background: #f8fafc;
+}
+
+/* =========================
+   FILTER BAR
+========================= */
+
+.filter-bar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.filter-bar select,
+.filter-bar input {
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    outline: none;
 }
 
 /* =========================
@@ -187,10 +217,12 @@ button {
     padding: 10px 14px;
     border-radius: 10px;
     cursor: pointer;
+    transition: 0.2s;
 }
 
 button:hover {
     background: #1d4ed8;
+    transform: translateY(-1px);
 }
 
 /* =========================
@@ -198,6 +230,7 @@ button:hover {
 ========================= */
 
 @media (max-width: 1024px) {
+
     .cards {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -208,9 +241,11 @@ button:hover {
 }
 
 @media (max-width: 768px) {
+
     .sidebar {
         position: relative;
         width: 100%;
+        height: auto;
     }
 
     .main {
@@ -219,5 +254,11 @@ button:hover {
 
     .cards {
         grid-template-columns: 1fr;
+    }
+
+    .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
     }
 }
