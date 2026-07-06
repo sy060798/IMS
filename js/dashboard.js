@@ -1,14 +1,14 @@
 let allWO = [];
 
 /* =========================
-   INIT SAFE
+   INIT
 ========================= */
 window.addEventListener("load", () => {
     loadDashboard();
 });
 
 /* =========================
-   LOAD DASHBOARD
+   LOAD
 ========================= */
 async function loadDashboard() {
 
@@ -19,9 +19,10 @@ async function loadDashboard() {
 
         renderCards();
         renderCharts();
+        renderPendingList();
 
     } catch (err) {
-        console.error("LOAD DASHBOARD ERROR:", err);
+        console.error(err);
     }
 }
 
@@ -35,46 +36,56 @@ function renderCards() {
     let close = 0;
     let pending = 0;
 
+    let closeRevenue = 0;
+    let pendingRevenue = 0;
+
     allWO.forEach(item => {
 
-        revenue += Number(item?.woTotal || 0);
+        const total = Number(item?.woTotal || 0);
+        revenue += total;
 
         if (item.status === "Open") open++;
-        if (item.status === "Close") close++;
-        if (item.status === "Pending") pending++;
+
+        if (item.status === "Close") {
+            close++;
+            closeRevenue += total;
+        }
+
+        if (item.status === "Pending") {
+            pending++;
+            pendingRevenue += total;
+        }
     });
 
     setText("totalHarga", formatRupiah(revenue));
     setText("totalOpen", open);
     setText("totalClose", close);
     setText("totalPending", pending);
+
+    setText("totalCloseRevenue", formatRupiah(closeRevenue));
+    setText("totalPendingRevenue", formatRupiah(pendingRevenue));
 }
 
 /* =========================
-   CHARTS (ONLY 2)
+   CHARTS
 ========================= */
 function renderCharts() {
 
     const pieEl = document.getElementById("statusPie");
     const barEl = document.getElementById("statusBar");
 
-    if (!pieEl || !barEl) {
-        console.error("Canvas tidak ditemukan");
-        return;
-    }
+    if (!pieEl || !barEl) return;
 
     let open = 0;
     let close = 0;
     let pending = 0;
 
     allWO.forEach(item => {
-
         if (item.status === "Open") open++;
         if (item.status === "Close") close++;
         if (item.status === "Pending") pending++;
     });
 
-    // PIE
     new Chart(pieEl, {
         type: "pie",
         data: {
@@ -86,7 +97,6 @@ function renderCharts() {
         }
     });
 
-    // BAR
     new Chart(barEl, {
         type: "bar",
         data: {
@@ -97,6 +107,26 @@ function renderCharts() {
             }]
         }
     });
+}
+
+/* =========================
+   PENDING LIST
+========================= */
+function renderPendingList() {
+
+    const pending = allWO.filter(x => x.status === "Pending");
+
+    const html = pending.map(item => `
+        <tr>
+            <td>${item?.praInvoiceNumber ?? "-"}</td>
+            <td>${item?.invoiceName ?? "-"}</td>
+            <td>${item?.city ?? "-"}</td>
+            <td>${formatRupiah(item?.woTotal)}</td>
+        </tr>
+    `).join("");
+
+    const table = document.getElementById("pendingTable");
+    if (table) table.innerHTML = html;
 }
 
 /* =========================
