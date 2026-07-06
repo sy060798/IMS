@@ -61,7 +61,6 @@ function render(data = []) {
             <td>${item?.praInvoiceNumber ?? "-"}</td>
             <td>${item?.invoiceNumber ?? "-"}</td>
             <td>${item?.invoiceName ?? "-"}</td>
-            <td>${item?.invoiceDate ?? "-"}</td>
             <td>${item?.periode ?? "-"}</td>
             <td>${item?.city ?? "-"}</td>
             <td>${item?.jenis ?? "-"}</td>
