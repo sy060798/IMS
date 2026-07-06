@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Report WO</title>
+<title>Report Invoice</title>
 
 <link rel="stylesheet" href="css/style.css">
 
@@ -22,13 +22,13 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     <aside class="sidebar">
 
         <div class="logo">
-            <h2>WO System</h2>
+            <h2>System</h2>
         </div>
 
         <ul class="menu">
 
             <li><a href="index.html"><i class="fa fa-house"></i> Dashboard</a></li>
-            <li><a href="wo.html"><i class="fa fa-table"></i> Data WO</a></li>
+            <li><a href="wo.html"><i class="fa fa-table"></i> Data</a></li>
             <li><a href="aktivasi.html"><i class="fa fa-bolt"></i> Aktivasi</a></li>
             <li><a href="maintenance.html"><i class="fa fa-wrench"></i> Maintenance</a></li>
             <li class="active"><a href="report.html"><i class="fa fa-chart-line"></i> Report</a></li>
@@ -41,7 +41,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     <main class="main">
 
         <div class="topbar">
-            <h1>Report WO</h1>
+            <h1>Report Invoice</h1>
         </div>
 
         <div class="table-box">
@@ -50,10 +50,10 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
             <div class="filter-bar">
 
                 <select id="filterStatus">
-    <option value="">Semua Status</option>
-    <option value="Open">Open</option>
-    <option value="Close">Close</option>
-    <option value="Pending">Pending</option>
+                    <option value="">Semua Status</option>
+                    <option value="Open">Open</option>
+                    <option value="Close">Close</option>
+                    <option value="Pending">Pending</option>
                 </select>
 
                 <select id="filterJenis">
@@ -70,17 +70,17 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
             <div class="summary">
 
                 <div class="card">
-                    <h3>Total WO</h3>
+                    <h3>Total Data</h3>
                     <p id="rTotalWO">0</p>
                 </div>
 
                 <div class="card">
-                    <h3>Total Harga</h3>
+                    <h3>Total Revenue</h3>
                     <p id="rTotalHarga">Rp 0</p>
                 </div>
 
                 <div class="card">
-                    <h3>Total Kota</h3>
+                    <h3>Total City</h3>
                     <p id="rTotalKota">0</p>
                 </div>
 
@@ -91,14 +91,15 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 
                 <thead>
                     <tr>
-                        <th>WO Number</th>
-                        <th>Job Name</th>
+                        <th>Pra Invoice</th>
+                        <th>Invoice Number</th>
+                        <th>Invoice Name</th>
+                        <th>Invoice Date</th>
+                        <th>Periode</th>
                         <th>City</th>
-                        <th>Wo End</th>
                         <th>Jenis</th>
                         <th>Status</th>
-                        <th>WO Total</th>
-                        <th>Pra Invoice Number</th>
+                        <th>Total</th>
                     </tr>
                 </thead>
 
