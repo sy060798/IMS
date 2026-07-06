@@ -41,7 +41,7 @@ function showToast(message, type = "success") {
 }
 
 /* =========================
-   DATE FORMAT FIX
+   DATE FORMAT
 ========================= */
 function formatDateOnly(dateStr) {
 
@@ -51,15 +51,11 @@ function formatDateOnly(dateStr) {
 
     if (isNaN(date.getTime())) return dateStr;
 
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-
-    return `${year}-${month}-${day}`;
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
 /* =========================
-   OPEN / CLOSE FORM
+   FORM CONTROL
 ========================= */
 function openForm() {
     document.getElementById("modalWO").style.display = "block";
@@ -71,24 +67,10 @@ function closeForm() {
     editMode = false;
 }
 
-/* =========================
-   CLEAR FORM
-========================= */
 function clearForm() {
 
-    const fields = [
-        "praInvoiceNumber",
-        "invoiceNumber",
-        "invoiceName",
-        "invoiceDate",
-        "periode",
-        "city",
-        "woTotal",
-        "status",
-        "jenis"
-    ];
-
-    fields.forEach(id => {
+    ["praInvoiceNumber","invoiceNumber","invoiceName","invoiceDate","periode","city","woTotal","status","jenis"]
+    .forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = "";
     });
@@ -96,7 +78,7 @@ function clearForm() {
 }
 
 /* =========================
-   SAVE (ADD / UPDATE)
+   SAVE
 ========================= */
 async function saveWO() {
 
@@ -113,53 +95,41 @@ async function saveWO() {
     };
 
     if (!data.praInvoiceNumber) {
-        showToast("Pra Invoice Number wajib diisi", "error");
+        showToast("Pra Invoice wajib diisi", "error");
         return;
     }
 
     const exists = woData.some(item =>
-        String(item?.praInvoiceNumber).trim() ===
-        String(data.praInvoiceNumber).trim()
+        String(item?.praInvoiceNumber).trim() === String(data.praInvoiceNumber).trim()
     );
 
     if (exists && !editMode) {
-        showToast("Pra Invoice sudah ada (duplikat)", "error");
+        showToast("Data duplikat", "error");
         return;
     }
 
     try {
 
-        let result;
-
-        if (editMode) {
-            result = await updateWO(data);
-        } else {
-            result = await addWO(data);
-        }
+        const result = editMode
+            ? await updateWO(data)
+            : await addWO(data);
 
         if (!result || result.status === false) {
-            showToast(result?.message || "Gagal menyimpan data", "error");
+            showToast(result?.message || "Gagal simpan", "error");
             return;
         }
 
         closeForm();
         await loadTable();
 
-        showToast(
-            editMode
-                ? "Data berhasil diperbarui"
-                : "Data berhasil ditambahkan"
-        );
+        showToast(editMode ? "Update sukses" : "Tambah sukses");
 
     } catch (err) {
-
-        console.error("SAVE ERROR:", err);
-        showToast("Terjadi kesalahan saat menyimpan data", "error");
-
+        console.error(err);
+        showToast("Error sistem", "error");
     }
 }
 
- 
 /* =========================
    LOAD TABLE
 ========================= */
@@ -167,62 +137,29 @@ async function loadTable() {
 
     try {
 
-        const search =
-            document.getElementById("searchWO")?.value || "";
-
-        const status =
-            document.getElementById("filterStatus")?.value || "";
-
-        const city =
-            document.getElementById("filterCity")?.value || "";
-
         const res = await getWO();
 
-        woData = Array.isArray(res)
-            ? res
-            : (res?.data || []);
+        woData = Array.isArray(res) ? res : (res?.data || []);
 
-        // sync city berdasarkan status
-        syncCityFilter();
-
-        // restore filter UI
-        if (document.getElementById("searchWO"))
-            document.getElementById("searchWO").value = search;
-
-        if (document.getElementById("filterStatus"))
-            document.getElementById("filterStatus").value = status;
-
-        if (document.getElementById("filterCity"))
-            document.getElementById("filterCity").value = city;
-
-        applyFilter();
+        applyFilter(); // penting: langsung pakai filter utama
 
     } catch (err) {
-
-        console.error("LOAD ERROR:", err);
+        console.error(err);
         woData = [];
         renderTable([]);
-
     }
 }
 
 /* =========================
    EDIT
 ========================= */
-function editWO(praInvoiceNumber) {
+function editWO(id) {
 
-    const item = woData.find(x =>
-        String(x?.praInvoiceNumber).trim() ===
-        String(praInvoiceNumber).trim()
-    );
+    const item = woData.find(x => String(x?.praInvoiceNumber) === String(id));
 
-    if (!item) {
-        showToast("Data tidak ditemukan", "error");
-        return;
-    }
+    if (!item) return showToast("Data tidak ditemukan", "error");
 
     editMode = true;
-
     openForm();
 
     setValue("praInvoiceNumber", item.praInvoiceNumber);
@@ -239,124 +176,75 @@ function editWO(praInvoiceNumber) {
 /* =========================
    DELETE
 ========================= */
-async function hapusWO(praInvoiceNumber) {
+async function hapusWO(id) {
 
-    if (!confirm("Yakin hapus data ini?")) return;
+    if (!confirm("Hapus data ini?")) return;
 
     try {
 
-        const result = await deleteWO(praInvoiceNumber);
+        const result = await deleteWO(id);
 
         if (!result || result.status === false) {
-            showToast(result?.message || "Gagal menghapus data", "error");
-            return;
+            return showToast("Gagal hapus", "error");
         }
 
         await loadTable();
-
-        showToast("Data berhasil dihapus");
+        showToast("Berhasil hapus");
 
     } catch (err) {
-
-        console.error("DELETE ERROR:", err);
-        showToast("Gagal menghapus data", "error");
-
+        console.error(err);
+        showToast("Error hapus", "error");
     }
 }
 
 /* =========================
-   FILTER
+   FILTER (FIX FINAL CASCADING)
 ========================= */
 function applyFilter() {
 
-    const search = (
-        document.getElementById("searchWO")?.value || ""
-    ).toLowerCase();
-
-    const status =
-        document.getElementById("filterStatus")?.value || "";
-
-    const city =
-        document.getElementById("filterCity")?.value || "";
+    const search = (document.getElementById("searchWO")?.value || "").toLowerCase();
+    const status = document.getElementById("filterStatus")?.value || "";
+    const cityEl = document.getElementById("filterCity");
 
     let filtered = [...woData];
 
-    if (search) {
-
-        filtered = filtered.filter(item =>
-            (item?.praInvoiceNumber || "")
-                .toLowerCase()
-                .includes(search) ||
-
-            (item?.invoiceNumber || "")
-                .toLowerCase()
-                .includes(search) ||
-
-            (item?.invoiceName || "")
-                .toLowerCase()
-                .includes(search)
-        );
-
-    }
-
+    // 1. STATUS FILTER
     if (status) {
-        filtered = filtered.filter(
-            item => item.status === status
-        );
+        filtered = filtered.filter(x => x.status === status);
     }
+
+    // 2. BUILD CITY LIST DARI STATUS TERFILTER
+    const cities = [...new Set(filtered.map(x => x.city).filter(Boolean))];
+
+    if (cityEl) {
+
+        const prev = cityEl.value;
+
+        cityEl.innerHTML =
+            `<option value="">Semua Kota</option>` +
+            cities.map(c => `<option value="${c}">${c}</option>`).join("");
+
+        cityEl.value = cities.includes(prev) ? prev : "";
+    }
+
+    // 3. CITY FILTER
+    const city = cityEl?.value || "";
 
     if (city) {
-        filtered = filtered.filter(
-            item => item.city === city
+        filtered = filtered.filter(x => x.city === city);
+    }
+
+    // 4. SEARCH
+    if (search) {
+        filtered = filtered.filter(x =>
+            (x.praInvoiceNumber || "").toLowerCase().includes(search) ||
+            (x.invoiceNumber || "").toLowerCase().includes(search) ||
+            (x.invoiceName || "").toLowerCase().includes(search)
         );
     }
 
     renderTable(filtered);
 }
-
-/* =========================
-   CITY FILTER (UPDATED)
-   mengikuti STATUS
-========================= */
-function syncCityFilter() {
-
-    const select = document.getElementById("filterCity");
-    if (!select) return;
-
-    const selected = select.value;
-
-    const status =
-        document.getElementById("filterStatus")?.value || "";
-
-    let data = [...woData];
-
-    // FILTER CITY BERDASARKAN STATUS
-    if (status) {
-        data = data.filter(item => item.status === status);
-    }
-
-    const cities = [
-        ...new Set(
-            data
-                .map(x => x.city)
-                .filter(Boolean)
-        )
-    ];
-
-    select.innerHTML =
-        `<option value="">Semua Kota</option>` +
-        cities
-            .map(c => `<option value="${c}">${c}</option>`)
-            .join("");
-
-    // jaga pilihan lama kalau masih valid
-    if (cities.includes(selected)) {
-        select.value = selected;
-    } else {
-        select.value = "";
-    }
-}
-
 
 /* =========================
    RENDER TABLE
@@ -368,10 +256,7 @@ function renderTable(data = []) {
     if (!tbody) return;
 
     if (!data.length) {
-
-        tbody.innerHTML =
-            `<tr><td colspan="10">No Data</td></tr>`;
-
+        tbody.innerHTML = `<tr><td colspan="10">No Data</td></tr>`;
         return;
     }
 
@@ -386,20 +271,12 @@ function renderTable(data = []) {
             <td>${item?.status ?? "-"}</td>
             <td>${formatRupiah(item?.woTotal)}</td>
             <td>${item?.jenis ?? "-"}</td>
-
             <td>
-                <button onclick="editWO('${item?.praInvoiceNumber}')">
-                    Edit
-                </button>
-
-                <button onclick="hapusWO('${item?.praInvoiceNumber}')">
-                    Hapus
-                </button>
+                <button onclick="editWO('${item?.praInvoiceNumber}')">Edit</button>
+                <button onclick="hapusWO('${item?.praInvoiceNumber}')">Hapus</button>
             </td>
-
         </tr>
     `).join("");
-
 }
 
 /* =========================
@@ -410,21 +287,12 @@ function val(id) {
 }
 
 function setValue(id, value) {
-
     const el = document.getElementById(id);
-
-    if (el) {
-        el.value = value ?? "";
-    }
-
+    if (el) el.value = value ?? "";
 }
 
-function formatRupiah(angka) {
-
-    return "Rp " +
-        Number(angka || 0)
-            .toLocaleString("id-ID");
-
+function formatRupiah(num) {
+    return "Rp " + Number(num || 0).toLocaleString("id-ID");
 }
 
 /* =========================
@@ -434,20 +302,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     loadTable();
 
-    document
-        .getElementById("searchWO")
-        ?.addEventListener("input", applyFilter);
-
-    document
-        .getElementById("filterCity")
-        ?.addEventListener("change", applyFilter);
-
-    // STATUS CHANGE → update CITY FILTER + apply filter
-    document
-        .getElementById("filterStatus")
-        ?.addEventListener("change", () => {
-            syncCityFilter();
-            applyFilter();
-        });
+    document.getElementById("searchWO")?.addEventListener("input", applyFilter);
+    document.getElementById("filterStatus")?.addEventListener("change", applyFilter);
+    document.getElementById("filterCity")?.addEventListener("change", applyFilter);
 
 });
