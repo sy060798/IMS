@@ -159,6 +159,7 @@ async function saveWO() {
     }
 }
 
+ 
 /* =========================
    LOAD TABLE
 ========================= */
@@ -181,8 +182,10 @@ async function loadTable() {
             ? res
             : (res?.data || []);
 
+        // sync city berdasarkan status
         syncCityFilter();
 
+        // restore filter UI
         if (document.getElementById("searchWO"))
             document.getElementById("searchWO").value = search;
 
@@ -312,6 +315,50 @@ function applyFilter() {
 }
 
 /* =========================
+   CITY FILTER (UPDATED)
+   mengikuti STATUS
+========================= */
+function syncCityFilter() {
+
+    const select = document.getElementById("filterCity");
+    if (!select) return;
+
+    const selected = select.value;
+
+    const status =
+        document.getElementById("filterStatus")?.value || "";
+
+    let data = [...woData];
+
+    // FILTER CITY BERDASARKAN STATUS
+    if (status) {
+        data = data.filter(item => item.status === status);
+    }
+
+    const cities = [
+        ...new Set(
+            data
+                .map(x => x.city)
+                .filter(Boolean)
+        )
+    ];
+
+    select.innerHTML =
+        `<option value="">Semua Kota</option>` +
+        cities
+            .map(c => `<option value="${c}">${c}</option>`)
+            .join("");
+
+    // jaga pilihan lama kalau masih valid
+    if (cities.includes(selected)) {
+        select.value = selected;
+    } else {
+        select.value = "";
+    }
+}
+
+
+/* =========================
    RENDER TABLE
 ========================= */
 function renderTable(data = []) {
@@ -356,38 +403,6 @@ function renderTable(data = []) {
 }
 
 /* =========================
-   CITY FILTER
-========================= */
-function syncCityFilter() {
-
-    const select =
-        document.getElementById("filterCity");
-
-    if (!select) return;
-
-    const selected = select.value;
-
-    const cities = [
-        ...new Set(
-            woData
-                .map(x => x.city)
-                .filter(Boolean)
-        )
-    ];
-
-    select.innerHTML =
-        `<option value="">Semua Kota</option>` +
-        cities
-            .map(c => `<option value="${c}">${c}</option>`)
-            .join("");
-
-    if (cities.includes(selected)) {
-        select.value = selected;
-    }
-
-}
-
-/* =========================
    HELPERS
 ========================= */
 function val(id) {
@@ -424,11 +439,15 @@ document.addEventListener("DOMContentLoaded", () => {
         ?.addEventListener("input", applyFilter);
 
     document
-        .getElementById("filterStatus")
-        ?.addEventListener("change", applyFilter);
-
-    document
         .getElementById("filterCity")
         ?.addEventListener("change", applyFilter);
+
+    // STATUS CHANGE → update CITY FILTER + apply filter
+    document
+        .getElementById("filterStatus")
+        ?.addEventListener("change", () => {
+            syncCityFilter();
+            applyFilter();
+        });
 
 });
