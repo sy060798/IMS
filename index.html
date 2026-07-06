@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WO Management Dashboard</title>
+    <title>System Dashboard</title>
 
     <link rel="stylesheet" href="css/style.css">
 
@@ -11,6 +11,7 @@
     <link rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
+
 <body>
 
 <div class="container">
@@ -19,7 +20,7 @@
     <aside class="sidebar">
 
         <div class="logo">
-            <h2>WO System</h2>
+            <h2>System</h2>
         </div>
 
         <ul class="menu">
@@ -34,7 +35,7 @@
             <li>
                 <a href="wo.html">
                     <i class="fa-solid fa-table"></i>
-                    Data WO
+                    Data
                 </a>
             </li>
 
@@ -81,12 +82,12 @@
         <section class="cards">
 
             <div class="card">
-                <h3>Total WO</h3>
+                <h3>Total Data</h3>
                 <p id="totalWO">0</p>
             </div>
 
             <div class="card">
-                <h3>Total Harga WO</h3>
+                <h3>Total Revenue</h3>
                 <p id="totalHarga">Rp 0</p>
             </div>
 
@@ -106,12 +107,12 @@
         <section class="chart-box">
 
             <div class="chart">
-                <h3>WO Per Bulan</h3>
+                <h3>Invoice Per Bulan</h3>
                 <canvas id="bulanChart"></canvas>
             </div>
 
             <div class="chart">
-                <h3>WO Per Kota</h3>
+                <h3>Data Per Kota</h3>
                 <canvas id="kotaChart"></canvas>
             </div>
 
@@ -120,27 +121,24 @@
         <!-- Tabel Data Terbaru -->
         <section class="table-box">
 
-            <h2>Data WO Terbaru</h2>
+            <h2>Data Terbaru</h2>
 
             <table>
 
                 <thead>
 
                     <tr>
-
-                        <th>WO Number</th>
-                        <th>Job Name</th>
+                        <th>Pra Invoice</th>
+                        <th>Invoice Number</th>
+                        <th>Invoice Name</th>
                         <th>City</th>
                         <th>Status</th>
-                        <th>WO Total</th>
-
+                        <th>Total</th>
                     </tr>
 
                 </thead>
 
-                <tbody id="recentTable">
-
-                </tbody>
+                <tbody id="recentTable"></tbody>
 
             </table>
 
@@ -153,10 +151,9 @@
 <!-- Chart JS -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Dashboard -->
+<!-- Scripts -->
 <script src="js/api.js"></script>
 <script src="js/dashboard.js"></script>
-<script src="js/wo.js"></script>
 
 </body>
 </html>
