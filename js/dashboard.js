@@ -1,19 +1,27 @@
+let allWO = [];
+
 /* =========================
    LOAD DASHBOARD
 ========================= */
 
-let allWO = [];
-
 async function loadDashboard() {
 
-    const res = await getWO();
+    try {
 
-    allWO = Array.isArray(res) ? res : (res?.data || []);
+        const res = await getWO();
 
-    renderCards();
-    renderRecentTable();
-    renderChartBulan();
-    renderChartKota();
+        allWO = Array.isArray(res) ? res : (res?.data || []);
+
+        renderCards();
+        renderRecentTable();
+        renderChartBulan();
+        renderChartKota();
+
+    } catch (err) {
+
+        console.error("LOAD DASHBOARD ERROR:", err);
+        allWO = [];
+    }
 }
 
 /* =========================
@@ -25,16 +33,16 @@ function renderCards() {
     const totalWO = allWO.length;
 
     const totalHarga = allWO.reduce((sum, item) => {
-        return sum + Number(item.woTotal || 0);
+        return sum + Number(item?.woTotal || 0);
     }, 0);
 
-    const aktivasi = allWO.filter(x => x.jenis === "Aktivasi").length;
-    const maintenance = allWO.filter(x => x.jenis === "Maintenance").length;
+    const aktivasi = allWO.filter(x => x?.jenis === "Aktivasi").length;
+    const maintenance = allWO.filter(x => x?.jenis === "Maintenance").length;
 
-    document.getElementById("totalWO").innerText = totalWO;
-    document.getElementById("totalHarga").innerText = formatRupiah(totalHarga);
-    document.getElementById("totalAktivasi").innerText = aktivasi;
-    document.getElementById("totalMaintenance").innerText = maintenance;
+    setText("totalWO", totalWO);
+    setText("totalHarga", formatRupiah(totalHarga));
+    setText("totalAktivasi", aktivasi);
+    setText("totalMaintenance", maintenance);
 }
 
 /* =========================
@@ -43,26 +51,21 @@ function renderCards() {
 
 function renderRecentTable() {
 
-    const recent = allWO.slice(-5).reverse();
+    const recent = [...allWO].slice(-5).reverse();
 
-    let html = "";
-
-    recent.forEach(item => {
-
-        html += `
+    const html = recent.map(item => `
         <tr>
-            <td>${item.praInvoiceNumber ?? "-"}</td>
-            <td>${item.invoiceNumber ?? "-"}</td>
-            <td>${item.invoiceName ?? "-"}</td>
-            <td>${item.city ?? "-"}</td>
-            <td>${item.status ?? "-"}</td>
-            <td>${formatRupiah(item.woTotal)}</td>
+            <td>${item?.praInvoiceNumber ?? "-"}</td>
+            <td>${item?.invoiceNumber ?? "-"}</td>
+            <td>${item?.invoiceName ?? "-"}</td>
+            <td>${item?.city ?? "-"}</td>
+            <td>${item?.status ?? "-"}</td>
+            <td>${formatRupiah(item?.woTotal)}</td>
         </tr>
-        `;
+    `).join("");
 
-    });
-
-    document.getElementById("recentTable").innerHTML = html;
+    const table = document.getElementById("recentTable");
+    if (table) table.innerHTML = html;
 }
 
 /* =========================
@@ -75,7 +78,7 @@ function renderChartBulan() {
 
     allWO.forEach(item => {
 
-        if (!item.invoiceDate) return;
+        if (!item?.invoiceDate) return;
 
         const date = new Date(item.invoiceDate);
 
@@ -90,9 +93,7 @@ function renderChartBulan() {
     });
 
     new Chart(document.getElementById("bulanChart"), {
-
         type: "bar",
-
         data: {
             labels: Object.keys(bulanCount),
             datasets: [{
@@ -101,7 +102,6 @@ function renderChartBulan() {
                 backgroundColor: "#2563eb"
             }]
         }
-
     });
 }
 
@@ -115,15 +115,13 @@ function renderChartKota() {
 
     allWO.forEach(item => {
 
-        const kota = item.city || "Unknown";
+        const kota = item?.city || "Unknown";
 
         kotaCount[kota] = (kotaCount[kota] || 0) + 1;
     });
 
     new Chart(document.getElementById("kotaChart"), {
-
         type: "pie",
-
         data: {
             labels: Object.keys(kotaCount),
             datasets: [{
@@ -140,17 +138,20 @@ function renderChartKota() {
                 ]
             }]
         }
-
     });
 }
 
 /* =========================
-   FORMAT RUPIAH
+   HELPERS
 ========================= */
 
 function formatRupiah(angka) {
-
     return "Rp " + Number(angka || 0).toLocaleString("id-ID");
+}
+
+function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.innerText = value;
 }
 
 /* =========================
