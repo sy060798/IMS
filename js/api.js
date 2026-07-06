@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbwE9WLiyjp8QpejmNC_iRzpSm3sL0xHb4k3jn3FoU0XqsG-19-bQXQqaFkYzp25PFZZ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycby3rTXADnj2dkicPOZcWojW9pDt1CNsKiG4Q0N2Xo-NwBX9AGW_r-GM8INmEArKVPbq/exec";
 
 /* =========================
    GET DATA (SAFE)
