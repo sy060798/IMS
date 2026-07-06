@@ -2,9 +2,26 @@ let editMode = false;
 let woData = [];
 
 /* =========================
+   DATE FORMAT FIX
+========================= */
+function formatDateOnly(dateStr) {
+
+    if (!dateStr) return "-";
+
+    const date = new Date(dateStr);
+
+    if (isNaN(date.getTime())) return dateStr;
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+}
+
+/* =========================
    OPEN / CLOSE FORM
 ========================= */
-
 function openForm() {
     document.getElementById("modalWO").style.display = "block";
 }
@@ -18,7 +35,6 @@ function closeForm() {
 /* =========================
    CLEAR FORM
 ========================= */
-
 function clearForm() {
     const fields = [
         "praInvoiceNumber",
@@ -41,7 +57,6 @@ function clearForm() {
 /* =========================
    SAVE (ADD / UPDATE)
 ========================= */
-
 async function saveWO() {
 
     const data = {
@@ -61,9 +76,7 @@ async function saveWO() {
         return;
     }
 
-    // =========================
     // ANTI DUPLIKAT
-    // =========================
     const exists = woData.some(item =>
         String(item?.praInvoiceNumber).trim() === String(data.praInvoiceNumber).trim()
     );
@@ -83,13 +96,8 @@ async function saveWO() {
             result = await addWO(data);
         }
 
-        console.log("SAVE RESPONSE:", result);
-
-        // =========================
-        // VALIDASI RESPONSE API
-        // =========================
         if (!result || result.status === false) {
-            alert(result?.message || "Gagal menyimpan data ke server");
+            alert(result?.message || "Gagal menyimpan data");
             return;
         }
 
@@ -105,7 +113,6 @@ async function saveWO() {
 /* =========================
    LOAD TABLE
 ========================= */
-
 async function loadTable() {
 
     try {
@@ -126,7 +133,6 @@ async function loadTable() {
 /* =========================
    EDIT
 ========================= */
-
 function editWO(praInvoiceNumber) {
 
     const item = woData.find(x =>
@@ -144,7 +150,10 @@ function editWO(praInvoiceNumber) {
     setValue("praInvoiceNumber", item.praInvoiceNumber);
     setValue("invoiceNumber", item.invoiceNumber);
     setValue("invoiceName", item.invoiceName);
-    setValue("invoiceDate", item.invoiceDate);
+
+    // 🔥 FIX DATE DI SINI
+    setValue("invoiceDate", formatDateOnly(item.invoiceDate));
+
     setValue("periode", item.periode);
     setValue("city", item.city);
     setValue("woTotal", item.woTotal);
@@ -155,7 +164,6 @@ function editWO(praInvoiceNumber) {
 /* =========================
    DELETE
 ========================= */
-
 async function hapusWO(praInvoiceNumber) {
 
     if (!confirm("Yakin hapus data ini?")) return;
@@ -180,7 +188,6 @@ async function hapusWO(praInvoiceNumber) {
 /* =========================
    FILTER
 ========================= */
-
 function applyFilter() {
 
     const search = (document.getElementById("searchWO")?.value || "").toLowerCase();
@@ -211,14 +218,13 @@ function applyFilter() {
 /* =========================
    RENDER TABLE
 ========================= */
-
 function renderTable(data = []) {
 
     const tbody = document.getElementById("tableBody");
     if (!tbody) return;
 
     if (!data.length) {
-        tbody.innerHTML = `<tr><td colspan="9">No Data</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10">No Data</td></tr>`;
         return;
     }
 
@@ -227,7 +233,10 @@ function renderTable(data = []) {
             <td>${item?.praInvoiceNumber ?? "-"}</td>
             <td>${item?.invoiceNumber ?? "-"}</td>
             <td>${item?.invoiceName ?? "-"}</td>
-            <td>${item?.invoiceDate ?? "-"}</td>
+
+            <!-- 🔥 DATE FIX -->
+            <td>${formatDateOnly(item?.invoiceDate)}</td>
+
             <td>${item?.periode ?? "-"}</td>
             <td>${item?.city ?? "-"}</td>
             <td>${item?.status ?? "-"}</td>
@@ -244,7 +253,6 @@ function renderTable(data = []) {
 /* =========================
    CITY FILTER SYNC
 ========================= */
-
 function syncCityFilter() {
 
     const select = document.getElementById("filterCity");
@@ -260,7 +268,6 @@ function syncCityFilter() {
 /* =========================
    HELPERS
 ========================= */
-
 function val(id) {
     return document.getElementById(id)?.value || "";
 }
@@ -277,5 +284,4 @@ function formatRupiah(angka) {
 /* =========================
    INIT
 ========================= */
-
 loadTable();
