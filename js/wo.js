@@ -27,10 +27,7 @@ function clearForm() {
         "invoiceName",
         "invoiceDate",
         "periode",
-        "jobName",
-        "area",
         "city",
-        "boq",
         "woTotal",
         "status",
         "jenis"
@@ -54,10 +51,7 @@ async function saveWO() {
         invoiceName: val("invoiceName"),
         invoiceDate: val("invoiceDate"),
         periode: val("periode"),
-        jobName: val("jobName"),
-        area: val("area"),
         city: val("city"),
-        boq: val("boq"),
         woTotal: val("woTotal"),
         status: val("status"),
         jenis: val("jenis")
@@ -121,10 +115,7 @@ function editWO(praInvoiceNumber) {
     setValue("invoiceName", item.invoiceName);
     setValue("invoiceDate", item.invoiceDate);
     setValue("periode", item.periode);
-    setValue("jobName", item.jobName);
-    setValue("area", item.area);
     setValue("city", item.city);
-    setValue("boq", item.boq);
     setValue("woTotal", item.woTotal);
     setValue("status", item.status);
     setValue("jenis", item.jenis);
