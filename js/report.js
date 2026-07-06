@@ -14,6 +14,7 @@ async function loadReport() {
 
     } catch (err) {
         console.error("LOAD REPORT ERROR:", err);
+        allData = [];
     }
 }
 
@@ -22,19 +23,17 @@ async function loadReport() {
 ========================= */
 function applyFilter() {
 
-    const status = document.getElementById("filterStatus").value;
-    const jenis = document.getElementById("filterJenis").value;
+    const status = document.getElementById("filterStatus")?.value || "";
+    const jenis = document.getElementById("filterJenis")?.value || "";
 
-    let data = allData;
+    let data = [...allData];
 
-    // filter jenis
     if (jenis) {
-        data = data.filter(x => x.jenis === jenis);
+        data = data.filter(x => x?.jenis === jenis);
     }
 
-    // filter status
     if (status) {
-        data = data.filter(x => x.status === status);
+        data = data.filter(x => x?.status === status);
     }
 
     render(data);
@@ -43,42 +42,42 @@ function applyFilter() {
 /* =========================
    RENDER
 ========================= */
-function render(data) {
+function render(data = []) {
 
-    let html = "";
     let totalWO = data.length;
     let totalHarga = 0;
     let kotaSet = new Set();
 
-    data.forEach(item => {
+    const html = data.map(item => {
 
-        totalHarga += Number(item.woTotal || 0);
+        totalHarga += Number(item?.woTotal || 0);
 
-        if (item.city) {
+        if (item?.city) {
             kotaSet.add(item.city);
         }
 
-        html += `
+        return `
         <tr>
-            <td>${item.praInvoiceNumber ?? "-"}</td>
-            <td>${item.invoiceNumber ?? "-"}</td>
-            <td>${item.invoiceName ?? "-"}</td>
-            <td>${item.invoiceDate ?? "-"}</td>
-            <td>${item.periode ?? "-"}</td>
-            <td>${item.city ?? "-"}</td>
-            <td>${item.jenis ?? "-"}</td>
-            <td>${item.status ?? "-"}</td>
-            <td>${formatRupiah(item.woTotal)}</td>
-            <td>${item.praInvoice ?? "-"}</td>
+            <td>${item?.praInvoiceNumber ?? "-"}</td>
+            <td>${item?.invoiceNumber ?? "-"}</td>
+            <td>${item?.invoiceName ?? "-"}</td>
+            <td>${item?.invoiceDate ?? "-"}</td>
+            <td>${item?.periode ?? "-"}</td>
+            <td>${item?.city ?? "-"}</td>
+            <td>${item?.jenis ?? "-"}</td>
+            <td>${item?.status ?? "-"}</td>
+            <td>${formatRupiah(item?.woTotal)}</td>
         </tr>
         `;
-    });
 
-    document.getElementById("reportTable").innerHTML = html;
+    }).join("");
 
-    document.getElementById("rTotalWO").innerText = totalWO;
-    document.getElementById("rTotalHarga").innerText = formatRupiah(totalHarga);
-    document.getElementById("rTotalKota").innerText = kotaSet.size;
+    const table = document.getElementById("reportTable");
+    if (table) table.innerHTML = html;
+
+    setText("rTotalWO", totalWO);
+    setText("rTotalHarga", formatRupiah(totalHarga));
+    setText("rTotalKota", kotaSet.size);
 }
 
 /* =========================
@@ -104,6 +103,16 @@ function formatRupiah(angka) {
 }
 
 /* =========================
+   SAFE HELPERS
+========================= */
+
+function setText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.innerText = value;
+}
+
+/* =========================
    INIT
 ========================= */
+
 loadReport();
