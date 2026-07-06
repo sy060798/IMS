@@ -1,29 +1,32 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbwE9WLiyjp8QpejmNC_iRzpSm3sL0xHb4k3jn3FoU0XqsG-19-bQXQqaFkYzp25PFZZ/exec";
 
 /* =========================
-   GET DATA ONLY (SAFE)
+   SAFE GET
 ========================= */
 async function getWO() {
     try {
-        const res = await fetch(API_URL + "?action=get");
+        const res = await fetch(API_URL + "?action=get", {
+            cache: "no-cache"
+        });
+
         const data = await res.json();
 
-        // pastikan selalu array
         if (Array.isArray(data)) return data;
         if (data && Array.isArray(data.data)) return data.data;
 
         return [];
+
     } catch (err) {
-        console.error("GET WO ERROR:", err);
+        console.error("GET ERROR:", err);
         return [];
     }
 }
 
 /* =========================
-   ADD / UPDATE / DELETE VIA GET
+   BASE CALL
 ========================= */
-
 async function callAPI(params) {
+
     try {
 
         let url = API_URL + "?action=" + params.action;
@@ -36,40 +39,70 @@ async function callAPI(params) {
             url += "&woNumber=" + encodeURIComponent(params.woNumber);
         }
 
-        const res = await fetch(url);
-        return await res.json();
+        const res = await fetch(url, {
+            method: "GET",
+            cache: "no-cache"
+        });
+
+        const result = await res.json();
+
+        console.log("API RESPONSE:", result);
+
+        return result;
 
     } catch (err) {
         console.error("API ERROR:", err);
-        return { status: false };
+        return { status: false, message: "network error" };
     }
 }
 
-/* WRAPPER */
-function addWO(data) {
-    return callAPI({ action: "add", data });
+/* =========================
+   ADD
+========================= */
+async function addWO(data) {
+
+    const res = await callAPI({
+        action: "add",
+        data
+    });
+
+    if (!res.status) {
+        console.error("ADD FAILED:", res);
+    }
+
+    return res;
 }
 
+/* =========================
+   UPDATE
+========================= */
 async function updateWO(data) {
 
-    const result = await callAPI({
+    const res = await callAPI({
         action: "update",
         data
     });
 
-    console.log("UPDATE RESULT:", result);
+    if (!res.status) {
+        console.error("UPDATE FAILED:", res);
+    }
 
-    return result;
+    return res;
 }
 
+/* =========================
+   DELETE
+========================= */
 async function deleteWO(woNumber) {
 
-    const result = await callAPI({
+    const res = await callAPI({
         action: "delete",
         woNumber
     });
 
-    console.log("DELETE RESULT:", result);
+    if (!res.status) {
+        console.error("DELETE FAILED:", res);
+    }
 
-    return result;
+    return res;
 }
