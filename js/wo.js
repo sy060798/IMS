@@ -92,6 +92,8 @@ async function loadTable() {
 
         renderTable(woData);
 
+        syncCityFilter();
+
     } catch (err) {
         console.error("LOAD ERROR:", err);
         woData = [];
@@ -104,7 +106,10 @@ async function loadTable() {
 
 function editWO(praInvoiceNumber) {
 
-    const item = woData.find(x => x?.praInvoiceNumber == praInvoiceNumber);
+    const item = woData.find(x =>
+        String(x?.praInvoiceNumber).trim() === String(praInvoiceNumber).trim()
+    );
+
     if (!item) return;
 
     editMode = true;
@@ -171,9 +176,12 @@ function renderTable(data = []) {
             <td>${item?.praInvoiceNumber ?? "-"}</td>
             <td>${item?.invoiceNumber ?? "-"}</td>
             <td>${item?.invoiceName ?? "-"}</td>
+            <td>${item?.invoiceDate ?? "-"}</td>
+            <td>${item?.periode ?? "-"}</td>
             <td>${item?.city ?? "-"}</td>
             <td>${item?.status ?? "-"}</td>
             <td>${formatRupiah(item?.woTotal)}</td>
+            <td>${item?.jenis ?? "-"}</td>
             <td>
                 <button onclick="editWO('${item?.praInvoiceNumber}')">Edit</button>
                 <button onclick="hapusWO('${item?.praInvoiceNumber}')">Hapus</button>
@@ -196,6 +204,21 @@ async function hapusWO(praInvoiceNumber) {
     } catch (err) {
         console.error("DELETE ERROR:", err);
     }
+}
+
+/* =========================
+   CITY FILTER AUTO SYNC
+========================= */
+
+function syncCityFilter() {
+
+    const select = document.getElementById("filterCity");
+    if (!select) return;
+
+    const cities = [...new Set(woData.map(x => x.city).filter(Boolean))];
+
+    select.innerHTML = `<option value="">Semua Kota</option>` +
+        cities.map(c => `<option value="${c}">${c}</option>`).join("");
 }
 
 /* =========================
