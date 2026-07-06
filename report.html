@@ -49,20 +49,20 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
             <!-- FILTER -->
             <div class="filter-bar">
 
-                <select id="filterStatus">
+                <select id="filterStatus" onchange="applyFilter()">
                     <option value="">Semua Status</option>
                     <option value="Open">Open</option>
                     <option value="Close">Close</option>
                     <option value="Pending">Pending</option>
                 </select>
 
-                <select id="filterJenis">
+                <select id="filterJenis" onchange="applyFilter()">
                     <option value="">Semua Jenis</option>
                     <option value="Aktivasi">Aktivasi</option>
                     <option value="Maintenance">Maintenance</option>
                 </select>
 
-                <button onclick="loadReport()">Filter</button>
+                <button onclick="loadReport()">Reload Data</button>
 
             </div>
 
@@ -94,7 +94,6 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
                         <th>Pra Invoice</th>
                         <th>Invoice Number</th>
                         <th>Invoice Name</th>
-                        <th>Invoice Date</th>
                         <th>Periode</th>
                         <th>City</th>
                         <th>Jenis</th>
