@@ -1,16 +1,26 @@
+let dataMaintenance = [];
+
 /* =========================
    LOAD MAINTENANCE DATA
 ========================= */
 
-let dataMaintenance = [];
-
 async function loadMaintenance() {
 
-    const all = await getWO();
+    try {
 
-    dataMaintenance = all.filter(item => item.jenis === "Maintenance");
+        const res = await getWO();
 
-    renderTable();
+        const all = Array.isArray(res) ? res : (res?.data || []);
+
+        dataMaintenance = all.filter(item => item?.jenis === "Maintenance");
+
+        renderTable();
+
+    } catch (err) {
+
+        console.error("LOAD MAINTENANCE ERROR:", err);
+        dataMaintenance = [];
+    }
 }
 
 /* =========================
@@ -19,26 +29,29 @@ async function loadMaintenance() {
 
 function renderTable() {
 
-    let html = "";
+    const tbody = document.getElementById("maintenanceTable");
 
-    dataMaintenance.forEach(item => {
+    if (!tbody) return;
 
-        html += `
+    if (dataMaintenance.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8">No Data</td></tr>`;
+        return;
+    }
+
+    const html = dataMaintenance.map(item => `
         <tr>
-            <td>${item.praInvoiceNumber ?? "-"}</td>
-            <td>${item.invoiceNumber ?? "-"}</td>
-            <td>${item.invoiceName ?? "-"}</td>
-            <td>${item.invoiceDate ?? "-"}</td>
-            <td>${item.periode ?? "-"}</td>
-            <td>${item.city ?? "-"}</td>
-            <td>${item.status ?? "-"}</td>
-            <td>${formatRupiah(item.woTotal)}</td>
+            <td>${item?.praInvoiceNumber ?? "-"}</td>
+            <td>${item?.invoiceNumber ?? "-"}</td>
+            <td>${item?.invoiceName ?? "-"}</td>
+            <td>${item?.invoiceDate ?? "-"}</td>
+            <td>${item?.periode ?? "-"}</td>
+            <td>${item?.city ?? "-"}</td>
+            <td>${item?.status ?? "-"}</td>
+            <td>${formatRupiah(item?.woTotal)}</td>
         </tr>
-        `;
+    `).join("");
 
-    });
-
-    document.getElementById("maintenanceTable").innerHTML = html;
+    tbody.innerHTML = html;
 }
 
 /* =========================
