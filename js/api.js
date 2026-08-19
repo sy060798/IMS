@@ -1,49 +1,73 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbzrcQicFyANsu8zWXuZR1LyirzpFPoNMC7NRujFdZfpIXmkPaOJSkPvylH4GPGj4m_K/exec";
 
 /* =========================
-   GET DATA (SAFE)
+   GET DATA - OPTIMIZED
 ========================= */
 async function getWO() {
     try {
         const res = await fetch(`${API_URL}?action=get`, {
-            method: "GET",
-            cache: "no-cache"
+            method: "GET"
         });
+
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+        }
 
         const data = await res.json();
 
-        if (Array.isArray(data)) return data;
-        if (Array.isArray(data?.data)) return data.data;
+        if (Array.isArray(data)) {
+            return data;
+        }
+
+        if (Array.isArray(data?.data)) {
+            return data.data;
+        }
 
         return [];
+
     } catch (err) {
         console.error("GET ERROR:", err);
         return [];
     }
 }
 
+
 /* =========================
-   BASE CALL (GET VERSION)
+   BASE CALL - OPTIMIZED
 ========================= */
 async function callAPI(params) {
     try {
 
-        let url = `${API_URL}?action=${params.action}`;
+        const query = new URLSearchParams();
+
+        query.set("action", params.action);
 
         // kirim data object
         if (params.data) {
-            url += `&data=${encodeURIComponent(JSON.stringify(params.data))}`;
+            query.set(
+                "data",
+                JSON.stringify(params.data)
+            );
         }
 
         // kirim key utama
         if (params.praInvoiceNumber) {
-            url += `&praInvoiceNumber=${encodeURIComponent(params.praInvoiceNumber)}`;
+            query.set(
+                "praInvoiceNumber",
+                params.praInvoiceNumber
+            );
         }
 
-        const res = await fetch(url, {
-            method: "GET",
-            cache: "no-cache"
-        });
+        const res = await fetch(
+            `${API_URL}?${query.toString()}`,
+            {
+                method: "GET"
+            }
+        );
+
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+        }
 
         const result = await res.json();
 
@@ -52,13 +76,16 @@ async function callAPI(params) {
         return result;
 
     } catch (err) {
+
         console.error("API ERROR:", err);
+
         return {
             status: false,
             message: "network error"
         };
     }
 }
+
 
 /* =========================
    ADD
@@ -70,6 +97,7 @@ function addWO(data) {
     });
 }
 
+
 /* =========================
    UPDATE
 ========================= */
@@ -80,6 +108,7 @@ function updateWO(data) {
     });
 }
 
+
 /* =========================
    DELETE
 ========================= */
@@ -89,3 +118,4 @@ function deleteWO(praInvoiceNumber) {
         praInvoiceNumber
     });
 }
+
