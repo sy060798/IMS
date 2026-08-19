@@ -1,22 +1,104 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbxAIonz6PoJzDvySBG6xfgUvvoSMFGIsxE5n95eVSJWYkFVJBT6vKysMEjls9RcqyAc/exec";
 
 
-/* =========================
+/* =========================================================
    CONFIG
-========================= */
+========================================================= */
 
 const API_LIMIT = 100;
 
+const API_TIMEOUT = 15000;
 
-/* =========================
+// Cache browser 10 detik
+const CLIENT_CACHE_TIME = 10000;
+
+
+/* =========================================================
+   CLIENT CACHE
+========================================================= */
+
+const woPageCache = new Map();
+
+
+/* =========================================================
+   CACHE KEY
+========================================================= */
+
+function getClientCacheKey(page, limit) {
+
+    return `${page}_${limit}`;
+
+}
+
+
+/* =========================================================
+   CLEAR CLIENT CACHE
+========================================================= */
+
+function clearWOClientCache() {
+
+    woPageCache.clear();
+
+}
+
+
+/* =========================================================
+   TIMEOUT FETCH
+========================================================= */
+
+async function fetchWithTimeout(
+    url,
+    options = {},
+    timeout = API_TIMEOUT
+) {
+
+    const controller =
+        new AbortController();
+
+    const timer =
+        setTimeout(
+            () => controller.abort(),
+            timeout
+        );
+
+
+    try {
+
+        const response =
+            await fetch(
+                url,
+                {
+                    ...options,
+                    signal:
+                        controller.signal
+                }
+            );
+
+        return response;
+
+    } finally {
+
+        clearTimeout(timer);
+
+    }
+
+}
+
+
+/* =========================================================
    API JSON PARSER
-========================= */
+========================================================= */
 
 async function parseAPIResponse(res) {
 
-    const text = await res.text();
+    const text =
+        await res.text();
 
-    // Cek HTTP error
+
+    /* =========================
+       HTTP ERROR
+    ========================= */
+
     if (!res.ok) {
 
         console.error(
@@ -26,13 +108,31 @@ async function parseAPIResponse(res) {
             text.substring(0, 500)
         );
 
+
         throw new Error(
             `HTTP ${res.status} - ${res.statusText}`
         );
+
     }
 
 
-    // Cek apakah response JSON
+    /* =========================
+       EMPTY RESPONSE
+    ========================= */
+
+    if (!text) {
+
+        throw new Error(
+            "Server mengembalikan response kosong"
+        );
+
+    }
+
+
+    /* =========================
+       JSON
+    ========================= */
+
     try {
 
         return JSON.parse(text);
@@ -44,42 +144,118 @@ async function parseAPIResponse(res) {
             text.substring(0, 500)
         );
 
+
         throw new Error(
             "Server tidak mengembalikan JSON"
         );
+
     }
+
 }
 
 
-/* =========================
+/* =========================================================
    GET DATA
    PAGINATION
-========================= */
+========================================================= */
 
-async function getWO(page = 1, limit = API_LIMIT) {
+async function getWO(
+    page = 1,
+    limit = API_LIMIT,
+    forceReload = false
+) {
+
+    page =
+        Math.max(
+            Number(page) || 1,
+            1
+        );
+
+
+    limit =
+        Math.min(
+            Math.max(
+                Number(limit) || API_LIMIT,
+                1
+            ),
+            500
+        );
+
+
+    const cacheKey =
+        getClientCacheKey(
+            page,
+            limit
+        );
+
+
+    /* =========================
+       CLIENT CACHE
+    ========================= */
+
+    if (!forceReload) {
+
+        const cached =
+            woPageCache.get(
+                cacheKey
+            );
+
+
+        if (cached) {
+
+            const age =
+                Date.now() -
+                cached.time;
+
+
+            if (
+                age <
+                CLIENT_CACHE_TIME
+            ) {
+
+                return cached.data;
+
+            }
+
+        }
+
+    }
+
+
+    /* =========================
+       URL
+    ========================= */
+
+    const url =
+        `${API_URL}` +
+        `?action=get` +
+        `&page=${page}` +
+        `&limit=${limit}`;
+
+
+    console.log(
+        "GET API:",
+        url
+    );
+
 
     try {
 
-        const url =
-            `${API_URL}?action=get&page=${page}&limit=${limit}`;
+        const res =
+            await fetchWithTimeout(
+                url,
+                {
+                    method: "GET",
 
-        console.log("GET API:", url);
-
-
-        const res = await fetch(url, {
-            method: "GET",
-            cache: "no-store"
-        });
+                    cache: "no-store"
+                }
+            );
 
 
         const result =
-            await parseAPIResponse(res);
-
-
-        console.log(
-            "GET RESPONSE:",
-            result
-        );
+            await parseAPIResponse(
+                res
+            );
 
 
         /* =========================
@@ -89,47 +265,87 @@ async function getWO(page = 1, limit = API_LIMIT) {
         if (
             result &&
             result.status === true &&
-            Array.isArray(result.data)
+            Array.isArray(
+                result.data
+            )
         ) {
 
+            woPageCache.set(
+                cacheKey,
+                {
+                    time: Date.now(),
+                    data: result
+                }
+            );
+
+
             return result;
+
         }
 
 
         /* =========================
-           FORMAT LAMA
-           BACKUP
+           FORMAT ARRAY LAMA
         ========================= */
 
-        if (Array.isArray(result)) {
-
-            return {
-                status: true,
-                data: result,
-                total: result.length,
-                page: 1,
-                limit: result.length,
-                totalPages: 1
-            };
-        }
-
-
         if (
-            result &&
-            Array.isArray(result.data)
+            Array.isArray(result)
         ) {
 
-            return result;
+            const converted = {
+
+                status: true,
+
+                data: result,
+
+                total:
+                    result.length,
+
+                page: page,
+
+                limit: limit,
+
+                totalPages: 1
+
+            };
+
+
+            woPageCache.set(
+                cacheKey,
+                {
+                    time: Date.now(),
+                    data: converted
+                }
+            );
+
+
+            return converted;
+
         }
 
 
+        /* =========================
+           DATA TIDAK VALID
+        ========================= */
+
         return {
+
             status: false,
+
             data: [],
+
             total: 0,
+
             page: page,
+
             limit: limit,
-            totalPages: 0
+
+            totalPages: 0,
+
+            message:
+                result?.message ||
+                "Response API tidak valid"
+
         };
 
 
@@ -142,29 +358,49 @@ async function getWO(page = 1, limit = API_LIMIT) {
 
 
         return {
+
             status: false,
+
             data: [],
+
             total: 0,
+
             page: page,
+
             limit: limit,
+
             totalPages: 0,
-            message: err.message || "network error"
+
+            message:
+                err.name ===
+                "AbortError"
+
+                    ? "Request timeout"
+
+                    : (
+                        err.message ||
+                        "network error"
+                    )
+
         };
+
     }
+
 }
 
 
-/* =========================
-   GET SEMUA DATA
-   OPTIONAL
-========================= */
+/* =========================================================
+   GET ALL DATA
+   HANYA UNTUK EXPORT / KEBUTUHAN KHUSUS
+========================================================= */
 
 async function getAllWO() {
 
     try {
 
         let page = 1;
-        const limit = API_LIMIT;
+
+        const limit = 500;
 
         let allData = [];
 
@@ -174,7 +410,11 @@ async function getAllWO() {
         do {
 
             const result =
-                await getWO(page, limit);
+                await getWO(
+                    page,
+                    limit,
+                    false
+                );
 
 
             if (
@@ -187,25 +427,38 @@ async function getAllWO() {
                     result
                 );
 
-                break;
+                return allData;
+
             }
 
 
-            if (Array.isArray(result.data)) {
+            if (
+                Array.isArray(
+                    result.data
+                )
+            ) {
 
                 allData =
-                    allData.concat(result.data);
+                    allData.concat(
+                        result.data
+                    );
+
             }
 
 
             totalPages =
-                Number(result.totalPages) || 1;
+                Number(
+                    result.totalPages
+                ) || 1;
 
 
             page++;
 
 
-        } while (page <= totalPages);
+        } while (
+            page <=
+            totalPages
+        );
 
 
         return allData;
@@ -218,33 +471,48 @@ async function getAllWO() {
             err
         );
 
+
         return [];
+
     }
+
 }
 
 
-/* =========================
-   BASE CALL
-========================= */
+/* =========================================================
+   BASE API CALL
+========================================================= */
 
-async function callAPI(params) {
+async function callAPI(
+    params
+) {
 
     try {
 
         let url =
-            `${API_URL}?action=${encodeURIComponent(params.action)}`;
+            `${API_URL}` +
+            `?action=` +
+            encodeURIComponent(
+                params.action
+            );
 
 
         /* =========================
-           DATA OBJECT
+           DATA
         ========================= */
 
-        if (params.data) {
+        if (
+            params.data
+        ) {
 
             url +=
-                `&data=${encodeURIComponent(
-                    JSON.stringify(params.data)
-                )}`;
+                `&data=` +
+                encodeURIComponent(
+                    JSON.stringify(
+                        params.data
+                    )
+                );
+
         }
 
 
@@ -252,12 +520,16 @@ async function callAPI(params) {
            PRA INVOICE NUMBER
         ========================= */
 
-        if (params.praInvoiceNumber) {
+        if (
+            params.praInvoiceNumber
+        ) {
 
             url +=
-                `&praInvoiceNumber=${encodeURIComponent(
+                `&praInvoiceNumber=` +
+                encodeURIComponent(
                     params.praInvoiceNumber
-                )}`;
+                );
+
         }
 
 
@@ -267,22 +539,77 @@ async function callAPI(params) {
         );
 
 
-        const res = await fetch(url, {
+        const res =
+            await fetchWithTimeout(
+                url,
+                {
+                    method: "GET",
 
-            method: "GET",
-
-            cache: "no-store"
-        });
+                    cache: "no-store"
+                }
+            );
 
 
         const result =
-            await parseAPIResponse(res);
+            await parseAPIResponse(
+                res
+            );
 
 
         console.log(
             "API RESPONSE:",
             result
         );
+
+
+        /* =========================
+           INVALID RESPONSE
+        ========================= */
+
+        if (
+            !result ||
+            typeof result !==
+            "object"
+        ) {
+
+            return {
+
+                status: false,
+
+                message:
+                    "Response API tidak valid"
+
+            };
+
+        }
+
+
+        /* =========================
+           CLEAR CLIENT CACHE
+           
+           Setelah data berubah.
+        ========================= */
+
+        if (
+            result.status === true
+        ) {
+
+            if (
+                params.action ===
+                "add" ||
+
+                params.action ===
+                "update" ||
+
+                params.action ===
+                "delete"
+            ) {
+
+                clearWOClientCache();
+
+            }
+
+        }
 
 
         return result;
@@ -301,17 +628,30 @@ async function callAPI(params) {
             status: false,
 
             message:
-                err.message || "network error"
+                err.name ===
+                "AbortError"
+
+                    ? "Request timeout"
+
+                    : (
+                        err.message ||
+                        "network error"
+                    )
+
         };
+
     }
+
 }
 
 
-/* =========================
+/* =========================================================
    ADD
-========================= */
+========================================================= */
 
-async function addWO(data) {
+async function addWO(
+    data
+) {
 
     return await callAPI({
 
@@ -320,14 +660,17 @@ async function addWO(data) {
         data: data
 
     });
+
 }
 
 
-/* =========================
+/* =========================================================
    UPDATE
-========================= */
+========================================================= */
 
-async function updateWO(data) {
+async function updateWO(
+    data
+) {
 
     return await callAPI({
 
@@ -336,14 +679,17 @@ async function updateWO(data) {
         data: data
 
     });
+
 }
 
 
-/* =========================
+/* =========================================================
    DELETE
-========================= */
+========================================================= */
 
-async function deleteWO(praInvoiceNumber) {
+async function deleteWO(
+    praInvoiceNumber
+) {
 
     return await callAPI({
 
@@ -353,4 +699,70 @@ async function deleteWO(praInvoiceNumber) {
             praInvoiceNumber
 
     });
+
+}
+
+
+/* =========================================================
+   REFRESH INDEX
+   DIPAKAI JIKA DATA DI SHEET
+   DIUBAH MANUAL
+========================================================= */
+
+async function refreshWOIndex() {
+
+    try {
+
+        const url =
+            `${API_URL}?action=refreshIndex`;
+
+
+        const res =
+            await fetchWithTimeout(
+                url,
+                {
+                    method: "GET",
+                    cache: "no-store"
+                }
+            );
+
+
+        const result =
+            await parseAPIResponse(
+                res
+            );
+
+
+        console.log(
+            "INDEX REFRESH:",
+            result
+        );
+
+
+        clearWOClientCache();
+
+
+        return result;
+
+
+    } catch (err) {
+
+        console.error(
+            "INDEX REFRESH ERROR:",
+            err
+        );
+
+
+        return {
+
+            status: false,
+
+            message:
+                err.message ||
+                "refresh index failed"
+
+        };
+
+    }
+
 }
