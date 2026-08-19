@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbzrcQicFyANsu8zWXuZR1LyirzpFPoNMC7NRujFdZfpIXmkPaOJSkPvylH4GPGj4m_K/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyctdN2FgbdR_Tet2jJtl8oWxdWPUUy1YEYJkUEeotlJ5a8qXhu4S845eNiuYA7fXkC/exec";
 
 /* =========================
    GET DATA - OPTIMIZED
