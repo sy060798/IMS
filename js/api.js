@@ -7,10 +7,18 @@ const API_URL = "https://script.google.com/macros/s/AKfycbxuubD1deSNlHoecTzOMAqY
 
 const API_LIMIT = 100;
 
+const API_MAX_LIMIT = 500;
+
 const API_TIMEOUT = 15000;
 
-// Cache browser 10 detik
-const CLIENT_CACHE_TIME = 10000;
+
+/*
+ * Cache browser hanya digunakan untuk GET.
+ *
+ * Setelah ADD / UPDATE / DELETE,
+ * cache langsung dibersihkan.
+ */
+const CLIENT_CACHE_TIME = 5000;
 
 
 /* =========================================================
@@ -32,12 +40,35 @@ function getClientCacheKey(page, limit) {
 
 
 /* =========================================================
-   CLEAR CLIENT CACHE
+   CLEAR ALL CLIENT CACHE
 ========================================================= */
 
 function clearWOClientCache() {
 
     woPageCache.clear();
+
+}
+
+
+/* =========================================================
+   CLEAR PAGE CACHE
+========================================================= */
+
+function clearWOPageCache(
+    page,
+    limit
+) {
+
+    const key =
+        getClientCacheKey(
+            page,
+            limit
+        );
+
+
+    woPageCache.delete(
+        key
+    );
 
 }
 
@@ -55,30 +86,32 @@ async function fetchWithTimeout(
     const controller =
         new AbortController();
 
+
     const timer =
         setTimeout(
-            () => controller.abort(),
+            () => {
+                controller.abort();
+            },
             timeout
         );
 
 
     try {
 
-        const response =
-            await fetch(
-                url,
-                {
-                    ...options,
-                    signal:
-                        controller.signal
-                }
-            );
-
-        return response;
+        return await fetch(
+            url,
+            {
+                ...options,
+                signal:
+                    controller.signal
+            }
+        );
 
     } finally {
 
-        clearTimeout(timer);
+        clearTimeout(
+            timer
+        );
 
     }
 
@@ -89,7 +122,9 @@ async function fetchWithTimeout(
    API JSON PARSER
 ========================================================= */
 
-async function parseAPIResponse(res) {
+async function parseAPIResponse(
+    res
+) {
 
     const text =
         await res.text();
@@ -105,7 +140,10 @@ async function parseAPIResponse(res) {
             "API HTTP ERROR:",
             res.status,
             res.statusText,
-            text.substring(0, 500)
+            text.substring(
+                0,
+                500
+            )
         );
 
 
@@ -117,7 +155,7 @@ async function parseAPIResponse(res) {
 
 
     /* =========================
-       EMPTY RESPONSE
+       EMPTY
     ========================= */
 
     if (!text) {
@@ -135,13 +173,18 @@ async function parseAPIResponse(res) {
 
     try {
 
-        return JSON.parse(text);
+        return JSON.parse(
+            text
+        );
 
     } catch (err) {
 
         console.error(
             "API NOT JSON:",
-            text.substring(0, 500)
+            text.substring(
+                0,
+                500
+            )
         );
 
 
@@ -150,6 +193,165 @@ async function parseAPIResponse(res) {
         );
 
     }
+
+}
+
+
+/* =========================================================
+   NORMALIZE RESPONSE
+========================================================= */
+
+function normalizeGetResponse(
+    result,
+    page,
+    limit
+) {
+
+    /* =========================
+       FORMAT BARU
+    ========================= */
+
+    if (
+        result &&
+        result.status === true &&
+        Array.isArray(
+            result.data
+        )
+    ) {
+
+        return {
+
+            status: true,
+
+            data:
+                result.data,
+
+            total:
+                Number(
+                    result.total
+                ) || 0,
+
+            page:
+                Number(
+                    result.page
+                ) || page,
+
+            limit:
+                Number(
+                    result.limit
+                ) || limit,
+
+            totalPages:
+                Number(
+                    result.totalPages
+                ) || 0
+
+        };
+
+    }
+
+
+    /* =========================
+       ARRAY LAMA
+    ========================= */
+
+    if (
+        Array.isArray(
+            result
+        )
+    ) {
+
+        return {
+
+            status: true,
+
+            data:
+                result,
+
+            total:
+                result.length,
+
+            page:
+                page,
+
+            limit:
+                limit,
+
+            totalPages:
+                1
+
+        };
+
+    }
+
+
+    /* =========================
+       DATA PROPERTY
+    ========================= */
+
+    if (
+        result &&
+        Array.isArray(
+            result.data
+        )
+    ) {
+
+        return {
+
+            status:
+                result.status !== false,
+
+            data:
+                result.data,
+
+            total:
+                Number(
+                    result.total
+                ) || result.data.length,
+
+            page:
+                Number(
+                    result.page
+                ) || page,
+
+            limit:
+                Number(
+                    result.limit
+                ) || limit,
+
+            totalPages:
+                Number(
+                    result.totalPages
+                ) || 1
+
+        };
+
+    }
+
+
+    /* =========================
+       INVALID
+    ========================= */
+
+    return {
+
+        status: false,
+
+        data: [],
+
+        total: 0,
+
+        page: page,
+
+        limit: limit,
+
+        totalPages: 0,
+
+        message:
+            result?.message ||
+            "Response API tidak valid"
+
+    };
 
 }
 
@@ -175,10 +377,11 @@ async function getWO(
     limit =
         Math.min(
             Math.max(
-                Number(limit) || API_LIMIT,
+                Number(limit) ||
+                API_LIMIT,
                 1
             ),
-            500
+            API_MAX_LIMIT
         );
 
 
@@ -189,11 +392,13 @@ async function getWO(
         );
 
 
-    /* =========================
+    /* =====================================================
        CLIENT CACHE
-    ========================= */
+    ===================================================== */
 
-    if (!forceReload) {
+    if (
+        !forceReload
+    ) {
 
         const cached =
             woPageCache.get(
@@ -217,25 +422,35 @@ async function getWO(
 
             }
 
+
+            /*
+             * Cache expired.
+             */
+
+            woPageCache.delete(
+                cacheKey
+            );
+
         }
 
     }
 
 
-    /* =========================
+    /* =====================================================
        URL
-    ========================= */
+    ===================================================== */
 
     const url =
         `${API_URL}` +
         `?action=get` +
-        `&page=${page}` +
-        `&limit=${limit}`;
+        `&page=${encodeURIComponent(page)}` +
+        `&limit=${encodeURIComponent(limit)}`;
 
 
     console.log(
-        "GET API:",
-        url
+        "GET WO:",
+        page,
+        limit
     );
 
 
@@ -247,112 +462,59 @@ async function getWO(
                 {
                     method: "GET",
 
-                    cache: "no-store"
+                    cache: "no-store",
+
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    }
                 }
             );
 
 
-        const result =
+        const raw =
             await parseAPIResponse(
                 res
             );
 
 
-        /* =========================
-           FORMAT BARU
-        ========================= */
+        const result =
+            normalizeGetResponse(
+                raw,
+                page,
+                limit
+            );
+
+
+        /* =================================================
+           CACHE SUCCESS RESPONSE
+        ================================================= */
 
         if (
-            result &&
-            result.status === true &&
-            Array.isArray(
-                result.data
-            )
+            result.status === true
         ) {
 
             woPageCache.set(
                 cacheKey,
                 {
-                    time: Date.now(),
-                    data: result
+                    time:
+                        Date.now(),
+
+                    data:
+                        result
                 }
             );
-
-
-            return result;
 
         }
 
 
-        /* =========================
-           FORMAT ARRAY LAMA
-        ========================= */
-
-        if (
-            Array.isArray(result)
-        ) {
-
-            const converted = {
-
-                status: true,
-
-                data: result,
-
-                total:
-                    result.length,
-
-                page: page,
-
-                limit: limit,
-
-                totalPages: 1
-
-            };
-
-
-            woPageCache.set(
-                cacheKey,
-                {
-                    time: Date.now(),
-                    data: converted
-                }
-            );
-
-
-            return converted;
-
-        }
-
-
-        /* =========================
-           DATA TIDAK VALID
-        ========================= */
-
-        return {
-
-            status: false,
-
-            data: [],
-
-            total: 0,
-
-            page: page,
-
-            limit: limit,
-
-            totalPages: 0,
-
-            message:
-                result?.message ||
-                "Response API tidak valid"
-
-        };
+        return result;
 
 
     } catch (err) {
 
         console.error(
-            "GET ERROR:",
+            "GET WO ERROR:",
             err
         );
 
@@ -390,8 +552,38 @@ async function getWO(
 
 
 /* =========================================================
+   FORCE RELOAD CURRENT PAGE
+========================================================= */
+
+async function reloadWO(
+    page = 1,
+    limit = API_LIMIT
+) {
+
+    /*
+     * Hanya reload page yang diminta.
+     *
+     * Tidak mengambil semua data.
+     */
+
+    clearWOPageCache(
+        page,
+        limit
+    );
+
+
+    return await getWO(
+        page,
+        limit,
+        true
+    );
+
+}
+
+
+/* =========================================================
    GET ALL DATA
-   HANYA UNTUK EXPORT / KEBUTUHAN KHUSUS
+   KHUSUS EXPORT
 ========================================================= */
 
 async function getAllWO() {
@@ -400,7 +592,8 @@ async function getAllWO() {
 
         let page = 1;
 
-        const limit = 500;
+        const limit =
+            API_MAX_LIMIT;
 
         let allData = [];
 
@@ -427,7 +620,7 @@ async function getAllWO() {
                     result
                 );
 
-                return allData;
+                break;
 
             }
 
@@ -480,6 +673,67 @@ async function getAllWO() {
 
 
 /* =========================================================
+   BUILD API URL
+========================================================= */
+
+function buildAPIUrl(
+    params
+) {
+
+    let url =
+        `${API_URL}` +
+        `?action=` +
+        encodeURIComponent(
+            params.action
+        );
+
+
+    /* =========================
+       DATA OBJECT
+    ========================= */
+
+    if (
+        params.data !== undefined &&
+        params.data !== null
+    ) {
+
+        url +=
+            `&data=` +
+            encodeURIComponent(
+                JSON.stringify(
+                    params.data
+                )
+            );
+
+    }
+
+
+    /* =========================
+       PRA INVOICE
+    ========================= */
+
+    if (
+        params.praInvoiceNumber !==
+        undefined &&
+        params.praInvoiceNumber !==
+        null
+    ) {
+
+        url +=
+            `&praInvoiceNumber=` +
+            encodeURIComponent(
+                params.praInvoiceNumber
+            );
+
+    }
+
+
+    return url;
+
+}
+
+
+/* =========================================================
    BASE API CALL
 ========================================================= */
 
@@ -487,55 +741,21 @@ async function callAPI(
     params
 ) {
 
+    const action =
+        params.action;
+
+
     try {
 
-        let url =
-            `${API_URL}` +
-            `?action=` +
-            encodeURIComponent(
-                params.action
+        const url =
+            buildAPIUrl(
+                params
             );
-
-
-        /* =========================
-           DATA
-        ========================= */
-
-        if (
-            params.data
-        ) {
-
-            url +=
-                `&data=` +
-                encodeURIComponent(
-                    JSON.stringify(
-                        params.data
-                    )
-                );
-
-        }
-
-
-        /* =========================
-           PRA INVOICE NUMBER
-        ========================= */
-
-        if (
-            params.praInvoiceNumber
-        ) {
-
-            url +=
-                `&praInvoiceNumber=` +
-                encodeURIComponent(
-                    params.praInvoiceNumber
-                );
-
-        }
 
 
         console.log(
             "CALL API:",
-            params.action
+            action
         );
 
 
@@ -545,7 +765,12 @@ async function callAPI(
                 {
                     method: "GET",
 
-                    cache: "no-store"
+                    cache: "no-store",
+
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    }
                 }
             );
 
@@ -558,13 +783,14 @@ async function callAPI(
 
         console.log(
             "API RESPONSE:",
+            action,
             result
         );
 
 
-        /* =========================
+        /* =================================================
            INVALID RESPONSE
-        ========================= */
+        ================================================= */
 
         if (
             !result ||
@@ -584,26 +810,26 @@ async function callAPI(
         }
 
 
-        /* =========================
-           CLEAR CLIENT CACHE
-           
-           Setelah data berubah.
-        ========================= */
+        /* =================================================
+           DATA BERHASIL BERUBAH
+        ================================================= */
 
         if (
             result.status === true
         ) {
 
             if (
-                params.action ===
-                "add" ||
-
-                params.action ===
-                "update" ||
-
-                params.action ===
-                "delete"
+                action === "add" ||
+                action === "update" ||
+                action === "delete"
             ) {
+
+                /*
+                 * Hapus cache frontend.
+                 *
+                 * Request berikutnya akan
+                 * mengambil data terbaru.
+                 */
 
                 clearWOClientCache();
 
@@ -619,6 +845,7 @@ async function callAPI(
 
         console.error(
             "API ERROR:",
+            action,
             err
         );
 
@@ -653,13 +880,17 @@ async function addWO(
     data
 ) {
 
-    return await callAPI({
+    const result =
+        await callAPI({
 
-        action: "add",
+            action: "add",
 
-        data: data
+            data: data
 
-    });
+        });
+
+
+    return result;
 
 }
 
@@ -672,13 +903,17 @@ async function updateWO(
     data
 ) {
 
-    return await callAPI({
+    const result =
+        await callAPI({
 
-        action: "update",
+            action: "update",
 
-        data: data
+            data: data
 
-    });
+        });
+
+
+    return result;
 
 }
 
@@ -691,22 +926,25 @@ async function deleteWO(
     praInvoiceNumber
 ) {
 
-    return await callAPI({
+    const result =
+        await callAPI({
 
-        action: "delete",
+            action: "delete",
 
-        praInvoiceNumber:
-            praInvoiceNumber
+            praInvoiceNumber:
+                praInvoiceNumber
 
-    });
+        });
+
+
+    return result;
 
 }
 
 
 /* =========================================================
    REFRESH INDEX
-   DIPAKAI JIKA DATA DI SHEET
-   DIUBAH MANUAL
+   HANYA JIKA SHEET DIUBAH MANUAL
 ========================================================= */
 
 async function refreshWOIndex() {
@@ -714,7 +952,8 @@ async function refreshWOIndex() {
     try {
 
         const url =
-            `${API_URL}?action=refreshIndex`;
+            `${API_URL}` +
+            `?action=refreshIndex`;
 
 
         const res =
@@ -722,7 +961,13 @@ async function refreshWOIndex() {
                 url,
                 {
                     method: "GET",
-                    cache: "no-store"
+
+                    cache: "no-store",
+
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    }
                 }
             );
 
@@ -738,6 +983,11 @@ async function refreshWOIndex() {
             result
         );
 
+
+        /*
+         * Data mungkin berubah
+         * setelah index refresh.
+         */
 
         clearWOClientCache();
 
@@ -758,10 +1008,149 @@ async function refreshWOIndex() {
             status: false,
 
             message:
-                err.message ||
-                "refresh index failed"
+                err.name ===
+                "AbortError"
+
+                    ? "Request timeout"
+
+                    : (
+                        err.message ||
+                        "refresh index failed"
+                    )
 
         };
+
+    }
+
+}
+
+
+/* =========================================================
+   HELPER:
+   UPDATE DATA DI CACHE
+   OPTIONAL
+========================================================= */
+
+function updateWOItemInCache(
+    updatedItem
+) {
+
+    if (
+        !updatedItem ||
+        !updatedItem.praInvoiceNumber
+    ) {
+
+        return;
+
+    }
+
+
+    for (
+        const [
+            cacheKey,
+            cached
+        ]
+        of woPageCache.entries()
+    ) {
+
+        if (
+            !cached ||
+            !cached.data ||
+            !Array.isArray(
+                cached.data.data
+            )
+        ) {
+
+            continue;
+
+        }
+
+
+        const list =
+            cached.data.data;
+
+
+        const index =
+            list.findIndex(
+                item =>
+                    String(
+                        item.praInvoiceNumber
+                    ).trim() ===
+                    String(
+                        updatedItem.praInvoiceNumber
+                    ).trim()
+            );
+
+
+        if (
+            index !== -1
+        ) {
+
+            list[index] = {
+                ...list[index],
+                ...updatedItem
+            };
+
+
+            cached.time =
+                Date.now();
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   HELPER:
+   REMOVE ITEM FROM CACHE
+   OPTIONAL
+========================================================= */
+
+function removeWOItemFromCache(
+    praInvoiceNumber
+) {
+
+    const key =
+        String(
+            praInvoiceNumber || ""
+        ).trim();
+
+
+    if (!key) {
+        return;
+    }
+
+
+    for (
+        const [
+            cacheKey,
+            cached
+        ]
+        of woPageCache.entries()
+    ) {
+
+        if (
+            !cached ||
+            !cached.data ||
+            !Array.isArray(
+                cached.data.data
+            )
+        ) {
+
+            continue;
+
+        }
+
+
+        cached.data.data =
+            cached.data.data.filter(
+                item =>
+                    String(
+                        item.praInvoiceNumber
+                    ).trim() !== key
+            );
 
     }
 
