@@ -1,735 +1,326 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbxuubD1deSNlHoecTzOMAqYyzrdNrnnAQ0-VPVvxM0HEKfYUceQTt4lySczmlKxo9SH/exec";
 
-
 /* =========================================================
    CONFIG
 ========================================================= */
 
-const API_LIMIT = 100;
-
-const API_MAX_LIMIT = 500;
-
-const API_TIMEOUT = 15000;
-
-
-/*
- * Cache browser hanya digunakan untuk GET.
- *
- * Setelah ADD / UPDATE / DELETE,
- * cache langsung dibersihkan.
- */
-const CLIENT_CACHE_TIME = 5000;
+const WO_CACHE_KEY = "WO_DATA_CACHE_V2";
+const WO_CACHE_TIME_KEY = "WO_DATA_CACHE_TIME_V2";
 
 
 /* =========================================================
-   CLIENT CACHE
+   CACHE - GET
 ========================================================= */
 
-const woPageCache = new Map();
-
-
-/* =========================================================
-   CACHE KEY
-========================================================= */
-
-function getClientCacheKey(page, limit) {
-
-    return `${page}_${limit}`;
-
-}
-
-
-/* =========================================================
-   CLEAR ALL CLIENT CACHE
-========================================================= */
-
-function clearWOClientCache() {
-
-    woPageCache.clear();
-
-}
-
-
-/* =========================================================
-   CLEAR PAGE CACHE
-========================================================= */
-
-function clearWOPageCache(
-    page,
-    limit
-) {
-
-    const key =
-        getClientCacheKey(
-            page,
-            limit
-        );
-
-
-    woPageCache.delete(
-        key
-    );
-
-}
-
-
-/* =========================================================
-   TIMEOUT FETCH
-========================================================= */
-
-async function fetchWithTimeout(
-    url,
-    options = {},
-    timeout = API_TIMEOUT
-) {
-
-    const controller =
-        new AbortController();
-
-
-    const timer =
-        setTimeout(
-            () => {
-                controller.abort();
-            },
-            timeout
-        );
-
+function getWOCache() {
 
     try {
 
-        return await fetch(
-            url,
-            {
-                ...options,
-                signal:
-                    controller.signal
-            }
-        );
+        const raw = localStorage.getItem(WO_CACHE_KEY);
 
-    } finally {
+        if (!raw) {
+            return [];
+        }
 
-        clearTimeout(
-            timer
-        );
+        const data = JSON.parse(raw);
 
+        if (!Array.isArray(data)) {
+            return [];
+        }
+
+        return data;
+
+    } catch (err) {
+
+        console.error("CACHE GET ERROR:", err);
+
+        return [];
     }
-
 }
 
 
 /* =========================================================
-   API JSON PARSER
+   CACHE - SAVE
 ========================================================= */
 
-async function parseAPIResponse(
-    res
-) {
-
-    const text =
-        await res.text();
-
-
-    /* =========================
-       HTTP ERROR
-    ========================= */
-
-    if (!res.ok) {
-
-        console.error(
-            "API HTTP ERROR:",
-            res.status,
-            res.statusText,
-            text.substring(
-                0,
-                500
-            )
-        );
-
-
-        throw new Error(
-            `HTTP ${res.status} - ${res.statusText}`
-        );
-
-    }
-
-
-    /* =========================
-       EMPTY
-    ========================= */
-
-    if (!text) {
-
-        throw new Error(
-            "Server mengembalikan response kosong"
-        );
-
-    }
-
-
-    /* =========================
-       JSON
-    ========================= */
+function setWOCache(data) {
 
     try {
 
-        return JSON.parse(
-            text
+        if (!Array.isArray(data)) {
+            return false;
+        }
+
+        localStorage.setItem(
+            WO_CACHE_KEY,
+            JSON.stringify(data)
+        );
+
+        localStorage.setItem(
+            WO_CACHE_TIME_KEY,
+            String(Date.now())
+        );
+
+        return true;
+
+    } catch (err) {
+
+        console.error("CACHE SAVE ERROR:", err);
+
+        return false;
+    }
+}
+
+
+/* =========================================================
+   CACHE - CLEAR
+========================================================= */
+
+function clearWOCache() {
+
+    try {
+
+        localStorage.removeItem(
+            WO_CACHE_KEY
+        );
+
+        localStorage.removeItem(
+            WO_CACHE_TIME_KEY
         );
 
     } catch (err) {
 
         console.error(
-            "API NOT JSON:",
-            text.substring(
-                0,
-                500
-            )
+            "CACHE CLEAR ERROR:",
+            err
         );
-
-
-        throw new Error(
-            "Server tidak mengembalikan JSON"
-        );
-
     }
-
 }
 
 
 /* =========================================================
-   NORMALIZE RESPONSE
+   CACHE TIME
 ========================================================= */
 
-function normalizeGetResponse(
-    result,
-    page,
-    limit
-) {
+function getWOCacheTime() {
 
-    /* =========================
-       FORMAT BARU
-    ========================= */
+    try {
 
-    if (
-        result &&
-        result.status === true &&
-        Array.isArray(
-            result.data
-        )
-    ) {
+        const value =
+            localStorage.getItem(
+                WO_CACHE_TIME_KEY
+            );
 
-        return {
+        if (!value) {
+            return 0;
+        }
 
-            status: true,
+        return Number(value) || 0;
 
-            data:
-                result.data,
+    } catch (err) {
 
-            total:
-                Number(
-                    result.total
-                ) || 0,
-
-            page:
-                Number(
-                    result.page
-                ) || page,
-
-            limit:
-                Number(
-                    result.limit
-                ) || limit,
-
-            totalPages:
-                Number(
-                    result.totalPages
-                ) || 0
-
-        };
-
+        return 0;
     }
+}
 
 
-    /* =========================
-       ARRAY LAMA
-    ========================= */
+/* =========================================================
+   CACHE INFO
+========================================================= */
 
-    if (
-        Array.isArray(
-            result
-        )
-    ) {
+function getWOInfo() {
 
-        return {
+    const data = getWOCache();
 
-            status: true,
-
-            data:
-                result,
-
-            total:
-                result.length,
-
-            page:
-                page,
-
-            limit:
-                limit,
-
-            totalPages:
-                1
-
-        };
-
-    }
-
-
-    /* =========================
-       DATA PROPERTY
-    ========================= */
-
-    if (
-        result &&
-        Array.isArray(
-            result.data
-        )
-    ) {
-
-        return {
-
-            status:
-                result.status !== false,
-
-            data:
-                result.data,
-
-            total:
-                Number(
-                    result.total
-                ) || result.data.length,
-
-            page:
-                Number(
-                    result.page
-                ) || page,
-
-            limit:
-                Number(
-                    result.limit
-                ) || limit,
-
-            totalPages:
-                Number(
-                    result.totalPages
-                ) || 1
-
-        };
-
-    }
-
-
-    /* =========================
-       INVALID
-    ========================= */
+    const cacheTime =
+        getWOCacheTime();
 
     return {
 
-        status: false,
+        count: data.length,
 
-        data: [],
+        cacheTime: cacheTime,
 
-        total: 0,
-
-        page: page,
-
-        limit: limit,
-
-        totalPages: 0,
-
-        message:
-            result?.message ||
-            "Response API tidak valid"
-
+        cacheDate:
+            cacheTime
+                ? new Date(cacheTime)
+                : null
     };
-
 }
 
 
 /* =========================================================
-   GET DATA
-   PAGINATION
+   GET DATA FROM SERVER
 ========================================================= */
 
-async function getWO(
-    page = 1,
-    limit = API_LIMIT,
-    forceReload = false
-) {
-
-    page =
-        Math.max(
-            Number(page) || 1,
-            1
-        );
-
-
-    limit =
-        Math.min(
-            Math.max(
-                Number(limit) ||
-                API_LIMIT,
-                1
-            ),
-            API_MAX_LIMIT
-        );
-
-
-    const cacheKey =
-        getClientCacheKey(
-            page,
-            limit
-        );
-
-
-    /* =====================================================
-       CLIENT CACHE
-    ===================================================== */
-
-    if (
-        !forceReload
-    ) {
-
-        const cached =
-            woPageCache.get(
-                cacheKey
-            );
-
-
-        if (cached) {
-
-            const age =
-                Date.now() -
-                cached.time;
-
-
-            if (
-                age <
-                CLIENT_CACHE_TIME
-            ) {
-
-                return cached.data;
-
-            }
-
-
-            /*
-             * Cache expired.
-             */
-
-            woPageCache.delete(
-                cacheKey
-            );
-
-        }
-
-    }
-
-
-    /* =====================================================
-       URL
-    ===================================================== */
-
-    const url =
-        `${API_URL}` +
-        `?action=get` +
-        `&page=${encodeURIComponent(page)}` +
-        `&limit=${encodeURIComponent(limit)}`;
-
-
-    console.log(
-        "GET WO:",
-        page,
-        limit
-    );
-
+async function getWOServer() {
 
     try {
 
-        const res =
-            await fetchWithTimeout(
-                url,
-                {
-                    method: "GET",
+        const url =
+            `${API_URL}?action=get&_=${Date.now()}`;
 
-                    cache: "no-store",
+        const response =
+            await fetch(url, {
 
-                    headers: {
-                        "Accept":
-                            "application/json"
-                    }
-                }
+                method: "GET",
+
+                cache: "no-store"
+            });
+
+        if (!response.ok) {
+
+            throw new Error(
+                `HTTP ${response.status}`
             );
-
-
-        const raw =
-            await parseAPIResponse(
-                res
-            );
-
+        }
 
         const result =
-            normalizeGetResponse(
-                raw,
-                page,
-                limit
-            );
+            await response.json();
 
 
-        /* =================================================
-           CACHE SUCCESS RESPONSE
-        ================================================= */
+        /* -----------------------------------------
+           Response harus array
+        ----------------------------------------- */
 
-        if (
-            result.status === true
+        let data = [];
+
+        if (Array.isArray(result)) {
+
+            data = result;
+
+        } else if (
+            Array.isArray(result?.data)
         ) {
 
-            woPageCache.set(
-                cacheKey,
-                {
-                    time:
-                        Date.now(),
+            data = result.data;
 
-                    data:
-                        result
-                }
+        } else {
+
+            console.warn(
+                "INVALID GET RESPONSE:",
+                result
             );
 
+            return null;
         }
 
 
-        return result;
+        /* -----------------------------------------
+           Simpan ke cache
+        ----------------------------------------- */
 
+        setWOCache(data);
+
+
+        /* -----------------------------------------
+           Beritahu aplikasi bahwa data berubah
+        ----------------------------------------- */
+
+        dispatchWOEvent(
+            "server-refresh",
+            data
+        );
+
+
+        return data;
 
     } catch (err) {
 
         console.error(
-            "GET WO ERROR:",
+            "GET SERVER ERROR:",
             err
         );
 
-
-        return {
-
-            status: false,
-
-            data: [],
-
-            total: 0,
-
-            page: page,
-
-            limit: limit,
-
-            totalPages: 0,
-
-            message:
-                err.name ===
-                "AbortError"
-
-                    ? "Request timeout"
-
-                    : (
-                        err.message ||
-                        "network error"
-                    )
-
-        };
-
+        return null;
     }
-
 }
 
 
 /* =========================================================
-   FORCE RELOAD CURRENT PAGE
+   GET WO
+   CACHE FIRST
 ========================================================= */
 
-async function reloadWO(
-    page = 1,
-    limit = API_LIMIT
-) {
+async function getWO(options = {}) {
 
-    /*
-     * Hanya reload page yang diminta.
-     *
-     * Tidak mengambil semua data.
-     */
+    const refresh =
+        options.refresh !== false;
 
-    clearWOPageCache(
-        page,
-        limit
-    );
+    const cached =
+        getWOCache();
 
 
-    return await getWO(
-        page,
-        limit,
-        true
-    );
+    /* -----------------------------------------
+       Kalau cache tersedia:
+       langsung return cache
+    ----------------------------------------- */
 
-}
+    if (cached.length > 0) {
 
-
-/* =========================================================
-   GET ALL DATA
-   KHUSUS EXPORT
-========================================================= */
-
-async function getAllWO() {
-
-    try {
-
-        let page = 1;
-
-        const limit =
-            API_MAX_LIMIT;
-
-        let allData = [];
-
-        let totalPages = 1;
+        console.log(
+            `WO CACHE: ${cached.length} data`
+        );
 
 
-        do {
+        /* -----------------------------------------
+           Refresh server di background
+        ----------------------------------------- */
 
-            const result =
-                await getWO(
-                    page,
-                    limit,
-                    false
-                );
+        if (refresh) {
 
+            getWOServer()
+                .then(serverData => {
 
-            if (
-                !result ||
-                result.status === false
-            ) {
+                    if (serverData) {
 
-                console.error(
-                    "GET ALL ERROR:",
-                    result
-                );
+                        console.log(
+                            `WO SERVER: ${serverData.length} data`
+                        );
+                    }
 
-                break;
+                })
+                .catch(err => {
 
-            }
-
-
-            if (
-                Array.isArray(
-                    result.data
-                )
-            ) {
-
-                allData =
-                    allData.concat(
-                        result.data
+                    console.error(
+                        "BACKGROUND REFRESH ERROR:",
+                        err
                     );
-
-            }
-
-
-            totalPages =
-                Number(
-                    result.totalPages
-                ) || 1;
+                });
+        }
 
 
-            page++;
-
-
-        } while (
-            page <=
-            totalPages
-        );
-
-
-        return allData;
-
-
-    } catch (err) {
-
-        console.error(
-            "GET ALL ERROR:",
-            err
-        );
-
-
-        return [];
-
+        return cached;
     }
 
+
+    /* -----------------------------------------
+       Belum ada cache
+       → ambil dari server
+    ----------------------------------------- */
+
+    console.log(
+        "WO CACHE EMPTY → GET SERVER"
+    );
+
+    const serverData =
+        await getWOServer();
+
+    return serverData || [];
 }
 
 
 /* =========================================================
-   BUILD API URL
+   FORCE REFRESH
 ========================================================= */
 
-function buildAPIUrl(
-    params
-) {
+async function refreshWO() {
 
-    let url =
-        `${API_URL}` +
-        `?action=` +
-        encodeURIComponent(
-            params.action
-        );
+    console.log(
+        "FORCE REFRESH WO..."
+    );
 
-
-    /* =========================
-       DATA OBJECT
-    ========================= */
-
-    if (
-        params.data !== undefined &&
-        params.data !== null
-    ) {
-
-        url +=
-            `&data=` +
-            encodeURIComponent(
-                JSON.stringify(
-                    params.data
-                )
-            );
-
-    }
-
-
-    /* =========================
-       PRA INVOICE
-    ========================= */
-
-    if (
-        params.praInvoiceNumber !==
-        undefined &&
-        params.praInvoiceNumber !==
-        null
-    ) {
-
-        url +=
-            `&praInvoiceNumber=` +
-            encodeURIComponent(
-                params.praInvoiceNumber
-            );
-
-    }
-
-
-    return url;
-
+    return await getWOServer();
 }
 
 
@@ -737,421 +328,760 @@ function buildAPIUrl(
    BASE API CALL
 ========================================================= */
 
-async function callAPI(
-    params
-) {
+async function callAPI({
 
-    const action =
-        params.action;
+    action,
 
+    data = null,
+
+    praInvoiceNumber = null
+
+}) {
 
     try {
 
-        const url =
-            buildAPIUrl(
-                params
-            );
+        const params =
+            new URLSearchParams();
 
 
-        console.log(
-            "CALL API:",
+        /* -----------------------------------------
+           Action
+        ----------------------------------------- */
+
+        params.set(
+            "action",
             action
         );
 
 
-        const res =
-            await fetchWithTimeout(
-                url,
-                {
-                    method: "GET",
+        /* -----------------------------------------
+           Data JSON
+        ----------------------------------------- */
 
-                    cache: "no-store",
+        if (data !== null) {
 
-                    headers: {
-                        "Accept":
-                            "application/json"
-                    }
-                }
+            params.set(
+                "data",
+                JSON.stringify(data)
             );
+        }
+
+
+        /* -----------------------------------------
+           Key untuk DELETE
+        ----------------------------------------- */
+
+        if (
+            praInvoiceNumber !== null &&
+            praInvoiceNumber !== undefined &&
+            praInvoiceNumber !== ""
+        ) {
+
+            params.set(
+                "praInvoiceNumber",
+                String(
+                    praInvoiceNumber
+                )
+            );
+        }
+
+
+        /* -----------------------------------------
+           Cache buster
+        ----------------------------------------- */
+
+        params.set(
+            "_",
+            String(Date.now())
+        );
+
+
+        const url =
+            `${API_URL}?${params.toString()}`;
+
+
+        console.log(
+            "API REQUEST:",
+            action
+        );
+
+
+        const response =
+            await fetch(url, {
+
+                method: "GET",
+
+                cache: "no-store"
+            });
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+        }
 
 
         const result =
-            await parseAPIResponse(
-                res
-            );
+            await response.json();
 
 
         console.log(
             "API RESPONSE:",
-            action,
             result
         );
 
 
-        /* =================================================
-           INVALID RESPONSE
-        ================================================= */
-
-        if (
-            !result ||
-            typeof result !==
-            "object"
-        ) {
-
-            return {
-
-                status: false,
-
-                message:
-                    "Response API tidak valid"
-
-            };
-
-        }
-
-
-        /* =================================================
-           DATA BERHASIL BERUBAH
-        ================================================= */
-
-        if (
-            result.status === true
-        ) {
-
-            if (
-                action === "add" ||
-                action === "update" ||
-                action === "delete"
-            ) {
-
-                /*
-                 * Hapus cache frontend.
-                 *
-                 * Request berikutnya akan
-                 * mengambil data terbaru.
-                 */
-
-                clearWOClientCache();
-
-            }
-
-        }
-
-
         return result;
-
 
     } catch (err) {
 
         console.error(
             "API ERROR:",
-            action,
             err
         );
-
 
         return {
 
             status: false,
 
             message:
-                err.name ===
-                "AbortError"
-
-                    ? "Request timeout"
-
-                    : (
-                        err.message ||
-                        "network error"
-                    )
-
+                err.message ||
+                "network error"
         };
-
     }
-
 }
 
 
 /* =========================================================
-   ADD
+   ADD WO
 ========================================================= */
 
-async function addWO(
-    data
-) {
+async function addWO(data) {
 
-    const result =
-        await callAPI({
+    try {
 
-            action: "add",
-
-            data: data
-
-        });
+        console.log(
+            "ADDING WO:",
+            data
+        );
 
 
-    return result;
+        const result =
+            await callAPI({
 
+                action: "add",
+
+                data: data
+            });
+
+
+        /* -----------------------------------------
+           Kalau server sukses
+        ----------------------------------------- */
+
+        if (
+            result &&
+            result.status === true
+        ) {
+
+            /*
+             * Apps Script mengembalikan
+             * data yang benar-benar disimpan.
+             */
+
+            const newData =
+                result.data || data;
+
+
+            const cache =
+                getWOCache();
+
+
+            /*
+             * Pastikan tidak ada duplikat
+             */
+
+            const key =
+                String(
+                    newData.praInvoiceNumber || ""
+                )
+                .trim()
+                .toLowerCase();
+
+
+            const exists =
+                cache.some(item =>
+
+                    String(
+                        item.praInvoiceNumber || ""
+                    )
+                    .trim()
+                    .toLowerCase() === key
+                );
+
+
+            if (!exists) {
+
+                cache.push(
+                    newData
+                );
+            }
+
+
+            /*
+             * Simpan cache
+             */
+
+            setWOCache(cache);
+
+
+            /*
+             * Update UI
+             */
+
+            dispatchWOEvent(
+                "add",
+                newData
+            );
+
+
+            console.log(
+                "WO ADD SUCCESS"
+            );
+        }
+
+
+        return result;
+
+    } catch (err) {
+
+        console.error(
+            "ADD WO ERROR:",
+            err
+        );
+
+        return {
+
+            status: false,
+
+            message:
+                err.message ||
+                "add error"
+        };
+    }
 }
 
 
 /* =========================================================
-   UPDATE
+   UPDATE WO
 ========================================================= */
 
-async function updateWO(
-    data
-) {
+async function updateWO(data) {
 
-    const result =
-        await callAPI({
+    try {
 
-            action: "update",
-
-            data: data
-
-        });
+        console.log(
+            "UPDATING WO:",
+            data
+        );
 
 
-    return result;
+        const result =
+            await callAPI({
 
+                action: "update",
+
+                data: data
+            });
+
+
+        /* -----------------------------------------
+           Server sukses
+        ----------------------------------------- */
+
+        if (
+            result &&
+            result.status === true
+        ) {
+
+            const updatedData =
+                result.data || data;
+
+
+            const cache =
+                getWOCache();
+
+
+            const target =
+                String(
+                    updatedData.praInvoiceNumber || ""
+                )
+                .trim()
+                .toLowerCase();
+
+
+            const index =
+                cache.findIndex(item =>
+
+                    String(
+                        item.praInvoiceNumber || ""
+                    )
+                    .trim()
+                    .toLowerCase() === target
+                );
+
+
+            /*
+             * Update data yang sudah ada
+             */
+
+            if (index !== -1) {
+
+                cache[index] = {
+
+                    ...cache[index],
+
+                    ...updatedData
+                };
+
+            } else {
+
+                /*
+                 * Kalau belum ada di cache,
+                 * tambahkan.
+                 */
+
+                cache.push(
+                    updatedData
+                );
+            }
+
+
+            /*
+             * Simpan cache
+             */
+
+            setWOCache(cache);
+
+
+            /*
+             * Update UI
+             */
+
+            dispatchWOEvent(
+                "update",
+                updatedData
+            );
+
+
+            console.log(
+                "WO UPDATE SUCCESS"
+            );
+        }
+
+
+        return result;
+
+    } catch (err) {
+
+        console.error(
+            "UPDATE WO ERROR:",
+            err
+        );
+
+        return {
+
+            status: false,
+
+            message:
+                err.message ||
+                "update error"
+        };
+    }
 }
 
 
 /* =========================================================
-   DELETE
+   DELETE WO
 ========================================================= */
 
 async function deleteWO(
     praInvoiceNumber
 ) {
 
-    const result =
-        await callAPI({
-
-            action: "delete",
-
-            praInvoiceNumber:
-                praInvoiceNumber
-
-        });
-
-
-    return result;
-
-}
-
-
-/* =========================================================
-   REFRESH INDEX
-   HANYA JIKA SHEET DIUBAH MANUAL
-========================================================= */
-
-async function refreshWOIndex() {
-
     try {
 
-        const url =
-            `${API_URL}` +
-            `?action=refreshIndex`;
+        console.log(
+            "DELETING WO:",
+            praInvoiceNumber
+        );
 
 
-        const res =
-            await fetchWithTimeout(
-                url,
+        const result =
+            await callAPI({
+
+                action: "delete",
+
+                praInvoiceNumber:
+                    praInvoiceNumber
+            });
+
+
+        /* -----------------------------------------
+           Server sukses
+        ----------------------------------------- */
+
+        if (
+            result &&
+            result.status === true
+        ) {
+
+            const target =
+                String(
+                    praInvoiceNumber
+                )
+                .trim()
+                .toLowerCase();
+
+
+            let cache =
+                getWOCache();
+
+
+            /*
+             * Hapus dari cache
+             */
+
+            cache =
+                cache.filter(item =>
+
+                    String(
+                        item.praInvoiceNumber || ""
+                    )
+                    .trim()
+                    .toLowerCase() !== target
+                );
+
+
+            /*
+             * Simpan cache
+             */
+
+            setWOCache(cache);
+
+
+            /*
+             * Update UI
+             */
+
+            dispatchWOEvent(
+                "delete",
                 {
-                    method: "GET",
-
-                    cache: "no-store",
-
-                    headers: {
-                        "Accept":
-                            "application/json"
-                    }
+                    praInvoiceNumber:
+                        praInvoiceNumber
                 }
             );
 
 
-        const result =
-            await parseAPIResponse(
-                res
+            console.log(
+                "WO DELETE SUCCESS"
             );
-
-
-        console.log(
-            "INDEX REFRESH:",
-            result
-        );
-
-
-        /*
-         * Data mungkin berubah
-         * setelah index refresh.
-         */
-
-        clearWOClientCache();
+        }
 
 
         return result;
 
-
     } catch (err) {
 
         console.error(
-            "INDEX REFRESH ERROR:",
+            "DELETE WO ERROR:",
             err
         );
-
 
         return {
 
             status: false,
 
             message:
-                err.name ===
-                "AbortError"
-
-                    ? "Request timeout"
-
-                    : (
-                        err.message ||
-                        "refresh index failed"
-                    )
-
+                err.message ||
+                "delete error"
         };
-
     }
-
 }
 
 
 /* =========================================================
-   HELPER:
-   UPDATE DATA DI CACHE
-   OPTIONAL
+   EVENT SYSTEM
 ========================================================= */
 
-function updateWOItemInCache(
-    updatedItem
+function dispatchWOEvent(
+    type,
+    data
 ) {
 
-    if (
-        !updatedItem ||
-        !updatedItem.praInvoiceNumber
-    ) {
+    try {
 
-        return;
+        window.dispatchEvent(
 
-    }
+            new CustomEvent(
+                "wo-updated",
+                {
+                    detail: {
 
+                        type: type,
 
-    for (
-        const [
-            cacheKey,
-            cached
-        ]
-        of woPageCache.entries()
-    ) {
+                        data: data,
 
-        if (
-            !cached ||
-            !cached.data ||
-            !Array.isArray(
-                cached.data.data
+                        cache:
+                            getWOCache()
+                    }
+                }
             )
-        ) {
+        );
 
-            continue;
+    } catch (err) {
 
-        }
-
-
-        const list =
-            cached.data.data;
-
-
-        const index =
-            list.findIndex(
-                item =>
-                    String(
-                        item.praInvoiceNumber
-                    ).trim() ===
-                    String(
-                        updatedItem.praInvoiceNumber
-                    ).trim()
-            );
-
-
-        if (
-            index !== -1
-        ) {
-
-            list[index] = {
-                ...list[index],
-                ...updatedItem
-            };
-
-
-            cached.time =
-                Date.now();
-
-        }
-
+        console.error(
+            "EVENT ERROR:",
+            err
+        );
     }
-
 }
 
 
 /* =========================================================
-   HELPER:
-   REMOVE ITEM FROM CACHE
-   OPTIONAL
+   LISTEN EVENT
 ========================================================= */
 
-function removeWOItemFromCache(
+function onWOUpdated(
+    callback
+) {
+
+    window.addEventListener(
+        "wo-updated",
+        event => {
+
+            try {
+
+                callback(
+                    event.detail
+                );
+
+            } catch (err) {
+
+                console.error(
+                    "WO CALLBACK ERROR:",
+                    err
+                );
+            }
+        }
+    );
+}
+
+
+/* =========================================================
+   FIND WO BY KEY
+========================================================= */
+
+function findWO(
     praInvoiceNumber
 ) {
 
-    const key =
+    const target =
         String(
             praInvoiceNumber || ""
-        ).trim();
+        )
+        .trim()
+        .toLowerCase();
 
 
-    if (!key) {
-        return;
+    const cache =
+        getWOCache();
+
+
+    return (
+        cache.find(item =>
+
+            String(
+                item.praInvoiceNumber || ""
+            )
+            .trim()
+            .toLowerCase() === target
+
+        ) || null
+    );
+}
+
+
+/* =========================================================
+   UPDATE CACHE MANUALLY
+========================================================= */
+
+function updateWOCacheItem(
+    data
+) {
+
+    if (
+        !data ||
+        !data.praInvoiceNumber
+    ) {
+        return false;
     }
 
 
-    for (
-        const [
-            cacheKey,
-            cached
-        ]
-        of woPageCache.entries()
+    const cache =
+        getWOCache();
+
+
+    const target =
+        String(
+            data.praInvoiceNumber
+        )
+        .trim()
+        .toLowerCase();
+
+
+    const index =
+        cache.findIndex(item =>
+
+            String(
+                item.praInvoiceNumber || ""
+            )
+            .trim()
+            .toLowerCase() === target
+        );
+
+
+    if (index === -1) {
+
+        cache.push(data);
+
+    } else {
+
+        cache[index] = {
+
+            ...cache[index],
+
+            ...data
+        };
+    }
+
+
+    setWOCache(cache);
+
+
+    dispatchWOEvent(
+        "cache-update",
+        data
+    );
+
+
+    return true;
+}
+
+
+/* =========================================================
+   REMOVE CACHE ITEM MANUALLY
+========================================================= */
+
+function removeWOCacheItem(
+    praInvoiceNumber
+) {
+
+    const target =
+        String(
+            praInvoiceNumber || ""
+        )
+        .trim()
+        .toLowerCase();
+
+
+    let cache =
+        getWOCache();
+
+
+    const oldLength =
+        cache.length;
+
+
+    cache =
+        cache.filter(item =>
+
+            String(
+                item.praInvoiceNumber || ""
+            )
+            .trim()
+            .toLowerCase() !== target
+        );
+
+
+    if (
+        cache.length !== oldLength
     ) {
 
-        if (
-            !cached ||
-            !cached.data ||
-            !Array.isArray(
-                cached.data.data
-            )
-        ) {
+        setWOCache(cache);
 
-            continue;
+        dispatchWOEvent(
+            "cache-delete",
+            {
+                praInvoiceNumber:
+                    praInvoiceNumber
+            }
+        );
 
-        }
-
-
-        cached.data.data =
-            cached.data.data.filter(
-                item =>
-                    String(
-                        item.praInvoiceNumber
-                    ).trim() !== key
-            );
-
+        return true;
     }
 
+
+    return false;
+}
+
+
+/* =========================================================
+   CACHE STATUS
+========================================================= */
+
+function getWOStatus() {
+
+    const data =
+        getWOCache();
+
+    const time =
+        getWOCacheTime();
+
+
+    return {
+
+        total:
+            data.length,
+
+        hasCache:
+            data.length > 0,
+
+        lastUpdate:
+            time
+                ? new Date(time)
+                : null
+    };
+}
+
+
+/* =========================================================
+   CLEAR ALL CACHE
+========================================================= */
+
+function resetWOCache() {
+
+    clearWOCache();
+
+    dispatchWOEvent(
+        "cache-clear",
+        []
+    );
+
+    console.log(
+        "WO CACHE CLEARED"
+    );
 }
