@@ -1,91 +1,356 @@
 const API_URL = "https://script.google.com/macros/s/AKfycby3rTXADnj2dkicPOZcWojW9pDt1CNsKiG4Q0N2Xo-NwBX9AGW_r-GM8INmEArKVPbq/exec";
 
+
 /* =========================
-   GET DATA (SAFE)
+   CONFIG
 ========================= */
-async function getWO() {
+
+const API_LIMIT = 100;
+
+
+/* =========================
+   API JSON PARSER
+========================= */
+
+async function parseAPIResponse(res) {
+
+    const text = await res.text();
+
+    // Cek HTTP error
+    if (!res.ok) {
+
+        console.error(
+            "API HTTP ERROR:",
+            res.status,
+            res.statusText,
+            text.substring(0, 500)
+        );
+
+        throw new Error(
+            `HTTP ${res.status} - ${res.statusText}`
+        );
+    }
+
+
+    // Cek apakah response JSON
     try {
-        const res = await fetch(`${API_URL}?action=get`, {
-            method: "GET",
-            cache: "no-cache"
-        });
 
-        const data = await res.json();
+        return JSON.parse(text);
 
-        if (Array.isArray(data)) return data;
-        if (Array.isArray(data?.data)) return data.data;
-
-        return [];
     } catch (err) {
-        console.error("GET ERROR:", err);
-        return [];
+
+        console.error(
+            "API NOT JSON:",
+            text.substring(0, 500)
+        );
+
+        throw new Error(
+            "Server tidak mengembalikan JSON"
+        );
     }
 }
 
+
 /* =========================
-   BASE CALL (GET VERSION)
+   GET DATA
+   PAGINATION
 ========================= */
-async function callAPI(params) {
+
+async function getWO(page = 1, limit = API_LIMIT) {
+
     try {
 
-        let url = `${API_URL}?action=${params.action}`;
+        const url =
+            `${API_URL}?action=get&page=${page}&limit=${limit}`;
 
-        // kirim data object
-        if (params.data) {
-            url += `&data=${encodeURIComponent(JSON.stringify(params.data))}`;
-        }
+        console.log("GET API:", url);
 
-        // kirim key utama
-        if (params.praInvoiceNumber) {
-            url += `&praInvoiceNumber=${encodeURIComponent(params.praInvoiceNumber)}`;
-        }
 
         const res = await fetch(url, {
             method: "GET",
-            cache: "no-cache"
+            cache: "no-store"
         });
 
-        const result = await res.json();
 
-        console.log("API RESPONSE:", result);
+        const result =
+            await parseAPIResponse(res);
 
-        return result;
 
-    } catch (err) {
-        console.error("API ERROR:", err);
+        console.log(
+            "GET RESPONSE:",
+            result
+        );
+
+
+        /* =========================
+           FORMAT BARU
+        ========================= */
+
+        if (
+            result &&
+            result.status === true &&
+            Array.isArray(result.data)
+        ) {
+
+            return result;
+        }
+
+
+        /* =========================
+           FORMAT LAMA
+           BACKUP
+        ========================= */
+
+        if (Array.isArray(result)) {
+
+            return {
+                status: true,
+                data: result,
+                total: result.length,
+                page: 1,
+                limit: result.length,
+                totalPages: 1
+            };
+        }
+
+
+        if (
+            result &&
+            Array.isArray(result.data)
+        ) {
+
+            return result;
+        }
+
+
         return {
             status: false,
-            message: "network error"
+            data: [],
+            total: 0,
+            page: page,
+            limit: limit,
+            totalPages: 0
+        };
+
+
+    } catch (err) {
+
+        console.error(
+            "GET ERROR:",
+            err
+        );
+
+
+        return {
+            status: false,
+            data: [],
+            total: 0,
+            page: page,
+            limit: limit,
+            totalPages: 0,
+            message: err.message || "network error"
         };
     }
 }
 
+
+/* =========================
+   GET SEMUA DATA
+   OPTIONAL
+========================= */
+
+async function getAllWO() {
+
+    try {
+
+        let page = 1;
+        const limit = API_LIMIT;
+
+        let allData = [];
+
+        let totalPages = 1;
+
+
+        do {
+
+            const result =
+                await getWO(page, limit);
+
+
+            if (
+                !result ||
+                result.status === false
+            ) {
+
+                console.error(
+                    "GET ALL ERROR:",
+                    result
+                );
+
+                break;
+            }
+
+
+            if (Array.isArray(result.data)) {
+
+                allData =
+                    allData.concat(result.data);
+            }
+
+
+            totalPages =
+                Number(result.totalPages) || 1;
+
+
+            page++;
+
+
+        } while (page <= totalPages);
+
+
+        return allData;
+
+
+    } catch (err) {
+
+        console.error(
+            "GET ALL ERROR:",
+            err
+        );
+
+        return [];
+    }
+}
+
+
+/* =========================
+   BASE CALL
+========================= */
+
+async function callAPI(params) {
+
+    try {
+
+        let url =
+            `${API_URL}?action=${encodeURIComponent(params.action)}`;
+
+
+        /* =========================
+           DATA OBJECT
+        ========================= */
+
+        if (params.data) {
+
+            url +=
+                `&data=${encodeURIComponent(
+                    JSON.stringify(params.data)
+                )}`;
+        }
+
+
+        /* =========================
+           PRA INVOICE NUMBER
+        ========================= */
+
+        if (params.praInvoiceNumber) {
+
+            url +=
+                `&praInvoiceNumber=${encodeURIComponent(
+                    params.praInvoiceNumber
+                )}`;
+        }
+
+
+        console.log(
+            "CALL API:",
+            params.action
+        );
+
+
+        const res = await fetch(url, {
+
+            method: "GET",
+
+            cache: "no-store"
+        });
+
+
+        const result =
+            await parseAPIResponse(res);
+
+
+        console.log(
+            "API RESPONSE:",
+            result
+        );
+
+
+        return result;
+
+
+    } catch (err) {
+
+        console.error(
+            "API ERROR:",
+            err
+        );
+
+
+        return {
+
+            status: false,
+
+            message:
+                err.message || "network error"
+        };
+    }
+}
+
+
 /* =========================
    ADD
 ========================= */
-function addWO(data) {
-    return callAPI({
+
+async function addWO(data) {
+
+    return await callAPI({
+
         action: "add",
-        data
+
+        data: data
+
     });
 }
+
 
 /* =========================
    UPDATE
 ========================= */
-function updateWO(data) {
-    return callAPI({
+
+async function updateWO(data) {
+
+    return await callAPI({
+
         action: "update",
-        data
+
+        data: data
+
     });
 }
+
 
 /* =========================
    DELETE
 ========================= */
-function deleteWO(praInvoiceNumber) {
-    return callAPI({
+
+async function deleteWO(praInvoiceNumber) {
+
+    return await callAPI({
+
         action: "delete",
-        praInvoiceNumber
+
+        praInvoiceNumber:
+            praInvoiceNumber
+
     });
 }
