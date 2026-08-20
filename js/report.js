@@ -97,3 +97,83 @@ function setText(id, value) {
    INIT
 ========================= */
 loadReport();
+
+/* =========================
+   EXPORT EXCEL
+========================= */
+function exportExcel() {
+
+    const status = document.getElementById("filterStatus")?.value || "";
+    const jenis = document.getElementById("filterJenis")?.value || "";
+
+    // Ambil semua data
+    let data = [...allData];
+
+    // Terapkan filter yang sama dengan tabel
+    if (jenis) {
+        data = data.filter(x => x?.jenis === jenis);
+    }
+
+    if (status) {
+        data = data.filter(x => x?.status === status);
+    }
+
+    // Cek data
+    if (!data.length) {
+        alert("Tidak ada data untuk di-export.");
+        return;
+    }
+
+    // Data untuk Excel
+    const excelData = data.map(item => ({
+        "Pra Invoice Number": item?.praInvoiceNumber ?? "-",
+        "Invoice Number": item?.invoiceNumber ?? "-",
+        "Invoice Name": item?.invoiceName ?? "-",
+        "Periode": item?.periode ?? "-",
+        "Kota": item?.city ?? "-",
+        "Jenis": item?.jenis ?? "-",
+        "Status": item?.status ?? "-",
+        "Total WO": Number(item?.woTotal || 0)
+    }));
+
+    // Buat worksheet
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+    // Lebar kolom
+    worksheet["!cols"] = [
+        { wch: 22 },
+        { wch: 22 },
+        { wch: 30 },
+        { wch: 15 },
+        { wch: 20 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 20 }
+    ];
+
+    // Buat workbook
+    const workbook = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+        workbook,
+        worksheet,
+        "Report WO"
+    );
+
+    // Nama file
+    const jenisName = jenis || "SemuaJenis";
+    const statusName = status || "SemuaStatus";
+
+    const fileName =
+        `Report_WO_${jenisName}_${statusName}.xlsx`;
+
+    // Download Excel
+    XLSX.writeFile(workbook, fileName);
+}
+
+
+/* =========================
+   LOAD REPORT
+========================= */
+loadReport();
+
