@@ -27,15 +27,40 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 
         <ul class="menu">
 
-            <li><a href="index.html"><i class="fa fa-house"></i> Dashboard</a></li>
-            <li><a href="wo.html"><i class="fa fa-table"></i> Data</a></li>
-            <li><a href="aktivasi.html"><i class="fa fa-bolt"></i> Aktivasi</a></li>
-            <li><a href="maintenance.html"><i class="fa fa-wrench"></i> Maintenance</a></li>
-            <li class="active"><a href="report.html"><i class="fa fa-chart-line"></i> Report</a></li>
+            <li>
+                <a href="index.html">
+                    <i class="fa fa-house"></i> Dashboard
+                </a>
+            </li>
+
+            <li>
+                <a href="wo.html">
+                    <i class="fa fa-table"></i> Data
+                </a>
+            </li>
+
+            <li>
+                <a href="aktivasi.html">
+                    <i class="fa fa-bolt"></i> Aktivasi
+                </a>
+            </li>
+
+            <li>
+                <a href="maintenance.html">
+                    <i class="fa fa-wrench"></i> Maintenance
+                </a>
+            </li>
+
+            <li class="active">
+                <a href="report.html">
+                    <i class="fa fa-chart-line"></i> Report
+                </a>
+            </li>
 
         </ul>
 
     </aside>
+
 
     <!-- MAIN -->
     <main class="main">
@@ -43,6 +68,7 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
         <div class="topbar">
             <h1>Report Invoice</h1>
         </div>
+
 
         <div class="table-box">
 
@@ -57,15 +83,29 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
                     <option value="Progress">Progress</option>
                 </select>
 
+
                 <select id="filterJenis" onchange="applyFilter()">
                     <option value="">Semua Jenis</option>
                     <option value="Aktivasi">Aktivasi</option>
                     <option value="Maintenance">Maintenance</option>
                 </select>
 
-                <button onclick="loadReport()">Reload Data</button>
+
+                <!-- RELOAD -->
+                <button type="button" onclick="loadReport()">
+                    <i class="fa fa-refresh"></i>
+                    Reload Data
+                </button>
+
+
+                <!-- EXPORT EXCEL -->
+                <button type="button" onclick="exportExcel()">
+                    <i class="fa fa-file-excel"></i>
+                    Export Excel
+                </button>
 
             </div>
+
 
             <!-- SUMMARY -->
             <div class="summary">
@@ -75,10 +115,12 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
                     <p id="rTotalWO">0</p>
                 </div>
 
+
                 <div class="card">
                     <h3>Total Revenue</h3>
                     <p id="rTotalHarga">Rp 0</p>
                 </div>
+
 
                 <div class="card">
                     <h3>Total City</h3>
@@ -87,10 +129,12 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 
             </div>
 
+
             <!-- TABLE -->
             <table>
 
                 <thead>
+
                     <tr>
                         <th>Pra Invoice</th>
                         <th>Invoice Number</th>
@@ -101,7 +145,9 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
                         <th>Status</th>
                         <th>Total</th>
                     </tr>
+
                 </thead>
+
 
                 <tbody id="reportTable"></tbody>
 
@@ -113,8 +159,18 @@ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
 
 </div>
 
+
+<!-- API -->
 <script src="js/api.js"></script>
+
+
+<!-- SHEETJS / XLSX -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+
+<!-- REPORT JS -->
 <script src="js/report.js"></script>
+
 
 </body>
 </html>
